@@ -365,5 +365,5 @@ if (!token) {
     );
     process.exit(1);
 }
-
+console.log("Bot is starting...");
 client.login(token);
