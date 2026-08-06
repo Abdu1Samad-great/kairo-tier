@@ -43,7 +43,7 @@ module.exports = async function updatePanel(guild) {
 
     // Create Embed
     const embed = new EmbedBuilder()
-        .setColor("#e11d48")
+        .setColor(settings.embed_color || "#e11d48")
         .setTitle(settings.header || "Support Center")
         .setDescription(settings.description || "Choose a category below.");
 

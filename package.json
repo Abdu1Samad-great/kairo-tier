@@ -1,18 +1,18 @@
-{
-  "name": "kairotiers",
-  "version": "1.0.0",
-  "description": "Tierlis bot for Kairotiers",
-  "license": "ISC",
-  "author": "Its_Kairo",
-  "type": "commonjs",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.110.7",
-    "discord-html-transcripts": "^3.2.0",
-    "discord.js": "^14.26.4",
-    "dotenv": "^16.6.1"
+  {
+    "name": "kairotiers",
+    "version": "1.0.0",
+    "description": "Tierlis bot for Kairotiers",
+    "license": "ISC",
+    "author": "Its_Kairo",
+    "type": "commonjs",
+    "main": "index.js",
+    "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "dependencies": {
+      "@supabase/supabase-js": "^2.110.7",
+      "discord-html-transcripts": "^3.2.0",
+      "discord.js": "^14.26.4",
+      "dotenv": "^16.6.1"
+    }
   }
-}

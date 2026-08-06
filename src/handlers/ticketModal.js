@@ -160,7 +160,7 @@ if (questions && questions.length > 0) {
             `q${q.question_order}`
         );
 
-        answers += `\n**${q.question}:** ${value}`;
+        answers += `**${q.question}** - ${value}\n`;
 
     }
 
@@ -168,20 +168,33 @@ if (questions && questions.length > 0) {
 
 
 
-    const embed = new EmbedBuilder()
+const embed = new EmbedBuilder()
 
-        .setColor("#e11d48")
+    .setColor(settings.embed_color || "#e11d48")
 
-        .setTitle("🎫 Support Ticket")
+    .setAuthor({
+        name: interaction.guild.name,
+        iconURL: interaction.guild.iconURL({ dynamic: true })
+    })
 
-        .setDescription(
-`Welcome ${interaction.user}
+    .setTitle("🎫 Support Ticket")
 
-Category:
-**${button.label}**
+.setDescription(
+`Hey ${interaction.user}, thanks for opening a ticket. A staff member will be with you shortly.
 
-${answers}`
-        );
+**Opened By:** ${interaction.user}
+**Category:** ${button.label}
+
+### Submitted Information
+
+${answers || "No information provided."}`
+)
+
+    .setFooter({
+        text: `Ticket #${String(number).padStart(4, "0")}`
+    })
+
+    .setTimestamp();
 
 
 

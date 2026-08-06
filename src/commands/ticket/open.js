@@ -53,13 +53,14 @@ module.exports = {
             ReadMessageHistory: true
         });
 
-        // Update DB
-        await supabase
-            .from("tickets")
-            .update({
-                status: "open"
-            })
-            .eq("channel_id", interaction.channel.id);
+// Update DB
+await supabase
+    .from("tickets")
+    .update({
+        status: "open",
+        close_requested_by: null
+    })
+    .eq("channel_id", interaction.channel.id);
 
         const embed = new EmbedBuilder()
             .setColor("Green")

@@ -10,45 +10,81 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName("editdescription")
         .setDescription("Edit the ticket panel description.")
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-        .addStringOption(option =>
-            option
-                .setName("text")
-                .setDescription("New description (use /n for a new line)")
-                .setRequired(true)
-        ),
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
     async execute(interaction) {
 
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.reply({
+            content:
+                "✏️ **Send the new panel description in this channel.**\n\nType `cancel` to cancel.\nYou have **60 seconds**.",
+            ephemeral: true
+        });
 
-        const text = interaction.options.getString("text");
-        const parsedText = text.replace(/\/n/g, "\n");
+        const filter = (m) => m.author.id === interaction.user.id;
 
-        const { data: settings } = await supabase
-            .from("ticket_settings")
-            .select("*")
-            .eq("guild_id", interaction.guild.id)
-            .single();
+        const collector = interaction.channel.createMessageCollector({
+            filter,
+            max: 1,
+            time: 60000
+        });
 
-        if (!settings) {
-            return interaction.editReply({
-                content: "❌ Run /setupticket first."
+        collector.on("collect", async (message) => {
+
+            if (message.content.toLowerCase() === "cancel") {
+
+                await message.delete().catch(() => {});
+
+                return interaction.followUp({
+                    content: "❌ Description edit cancelled.",
+                    ephemeral: true
+                });
+
+            }
+
+            const { data: settings } = await supabase
+                .from("ticket_settings")
+                .select("*")
+                .eq("guild_id", interaction.guild.id)
+                .single();
+
+            if (!settings) {
+
+                return interaction.followUp({
+                    content: "❌ Run /setupticket first.",
+                    ephemeral: true
+                });
+
+            }
+
+            await supabase
+                .from("ticket_settings")
+                .update({
+                    description: message.content
+                })
+                .eq("guild_id", interaction.guild.id);
+
+            await updatePanel(interaction.guild);
+
+            await message.delete().catch(() => {});
+
+            return interaction.followUp({
+                content: "✅ Description updated successfully.",
+                ephemeral: true
             });
-        }
 
-        await supabase
-            .from("ticket_settings")
-            .update({
-                description: parsedText
-            })
-            .eq("guild_id", interaction.guild.id);
+        });
 
-        // Update whole panel
-        await updatePanel(interaction.guild);
+        collector.on("end", async (collected) => {
 
-        return interaction.editReply({
-            content: "✅ Description updated successfully."
+            if (collected.size === 0) {
+
+                await interaction.followUp({
+                    content: "⏰ You didn't send a description in time.",
+                    ephemeral: true
+                }).catch(() => {});
+
+            }
+
         });
 
     }

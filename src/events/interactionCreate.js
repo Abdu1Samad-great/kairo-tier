@@ -135,10 +135,19 @@ module.exports = {
                 }
 
             } catch (error) {
+    console.error(error);
 
-                console.error("MODAL ERROR:", error);
-
-            }
+    if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({
+            content: "❌ " + error.message
+        }).catch(() => {});
+    } else {
+        await interaction.reply({
+            content: "❌ " + error.message,
+            flags: 64
+        }).catch(() => {});
+    }
+}
 
             return;
         }

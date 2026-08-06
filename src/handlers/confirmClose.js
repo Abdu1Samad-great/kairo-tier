@@ -1,12 +1,10 @@
 const supabase = require("../database/supabase");
-
+const { MessageFlags } = require("discord.js");
 
 module.exports = async (interaction) => {
+
     if (!interaction.isButton()) return;
     if (interaction.customId !== "confirm_close") return;
-
-    // Acknowledge interaction only once
-    await interaction.deferUpdate();
 
     const { data: ticket } = await supabase
         .from("tickets")
@@ -15,88 +13,85 @@ module.exports = async (interaction) => {
         .single();
 
     if (!ticket) {
-        return interaction.followUp({
+        return interaction.reply({
             content: "❌ Ticket not found.",
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral
         });
-
-    // Only the staff member who requested the close can confirm
-if (!ticket.close_requested_by) {
-    const owner = ticket.claimed_by
-        ? `<@${ticket.claimed_by}>`
-        : "a staff member";
-
-    return interaction.followUp({
-        content: `❌ Only ${owner} can confirm this ticket closure.`,
-        ephemeral: true,
-    });
-}
-
-if (ticket.close_requested_by !== interaction.user.id) {
-    return interaction.followUp({
-        content: `❌ Only <@${ticket.close_requested_by}> can confirm this ticket closure.`,
-        ephemeral: true,
-    });
     }
 
-    // Reset close request
+    if (!ticket.close_requested_by) {
+        const owner = ticket.claimed_by
+            ? `<@${ticket.claimed_by}>`
+            : "a staff member";
+
+        return interaction.reply({
+            content: `❌ Only ${owner} can confirm this ticket closure.`,
+            flags: MessageFlags.Ephemeral
+        });
+    }
+
+    if (ticket.close_requested_by !== interaction.user.id) {
+        return interaction.reply({
+            content: `❌ Only <@${ticket.close_requested_by}> can confirm this ticket closure.`,
+            flags: MessageFlags.Ephemeral
+        });
+    }
+
     await supabase
         .from("tickets")
         .update({
-            close_requested_by: null,
+            close_requested_by: null
         })
         .eq("channel_id", interaction.channel.id);
 
-}
-    
-        await interaction.message.edit({
+    await interaction.update({
         content: "🔒 Ticket will be closed in **5 seconds...**",
         embeds: [],
-        components: [],
+        components: []
     });
 
-setTimeout(async () => {
+    setTimeout(async () => { 
+                const { data: settings } = await supabase
+            .from("ticket_settings")
+            .select("closed_category")
+            .eq("guild_id", interaction.guild.id)
+            .single();
 
-    const { data: settings } = await supabase
-        .from("ticket_settings")
-        .select("closed_category")
-        .eq("guild_id", interaction.guild.id)
-        .single();
+        if (!settings?.closed_category) return;
 
-    if (!settings?.closed_category) return;
+        // Move ticket
+        await interaction.channel.setParent(settings.closed_category);
 
-    // Move ticket
-    await interaction.channel.setParent(settings.closed_category);
+        // Rename ticket
+        await interaction.channel.setName(
+            `closed-${interaction.channel.name.replace(/^closed-/, "")}`
+        );
 
-    // Rename ticket
-    await interaction.channel.setName(
-        `closed-${interaction.channel.name.replace(/^closed-/, "")}`
-    );
+        // Lock ticket for owner
+        if (ticket.owner_id) {
+            await interaction.channel.permissionOverwrites.edit(ticket.owner_id, {
+                SendMessages: false
+            });
+        }
 
-    // Lock ticket for owner
-    if (ticket.owner_id) {
-        await interaction.channel.permissionOverwrites.edit(ticket.owner_id, {
-            SendMessages: false
+        // Update database
+        await supabase
+            .from("tickets")
+            .update({
+                status: "closed"
+            })
+            .eq("channel_id", interaction.channel.id);
+
+        await interaction.channel.send({
+            embeds: [
+                {
+                    color: 0xff0000,
+                    title: "🔒 Ticket Closed",
+                    description: `This ticket has been closed by <@${interaction.user.id}>.`
+                }
+            ]
         });
-    }
 
-    // Update database
-    await supabase
-        .from("tickets")
-        .update({
-            status: "closed"
-        })
-        .eq("channel_id", interaction.channel.id);
+    }, 5000);
 
-    await interaction.channel.send({
-        embeds: [
-            {
-                color: 0xff0000,
-                title: "🔒 Ticket Closed",
-                description: `This ticket has been closed by <@${interaction.user.id}>.`
-            }
-        ]
-    });
-
-}, 5000);
 };

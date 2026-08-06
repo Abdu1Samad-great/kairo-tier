@@ -12,14 +12,14 @@ const {
 
 const supabase = require("../database/supabase");
 
+
 module.exports = async (interaction) => {
 
     if (!interaction.isButton()) return;
     if (!interaction.customId.startsWith("ticket_")) return;
 
-    const buttonId = interaction.customId.replace("ticket_", "");
 
-    console.log("Button ID:", buttonId);
+    const buttonId = interaction.customId.replace("ticket_", "");
 
 
     const { data: button, error } = await supabase
@@ -37,58 +37,58 @@ module.exports = async (interaction) => {
     }
 
 
-    // Check Dynamic Questions
-    const { data: questions } = await supabase
-        .from("ticket_questions")
-        .select("*")
-        .eq("button_id", button.id)
-        .order("question_order");
+// Check Dynamic Questions
+const { data: questions } = await supabase
+    .from("ticket_questions")
+    .select("*")
+    .eq("button_id", button.id)
+    .order("question_order");
 
+// If Questions Exist -> Show Modal
+if (questions && questions.length > 0) {
 
-    // If Questions Exist -> Show Modal
-    if (questions && questions.length > 0) {
+    const modal = new ModalBuilder()
+        .setCustomId(`ticket_modal_${button.id}`)
+        .setTitle(button.label);
 
-        const modal = new ModalBuilder()
-            .setCustomId(`ticket_modal_${button.id}`)
-            .setTitle(button.label);
+    for (const q of questions) {
 
-
-        for (const q of questions) {
-
-            const input = new TextInputBuilder()
-                .setCustomId(`q${q.question_order}`)
-                .setLabel(q.question)
-                .setRequired(true)
-                .setStyle(
-                    q.input_type === "paragraph"
-                        ? TextInputStyle.Paragraph
-                        : TextInputStyle.Short
-                );
-
-
-            modal.addComponents(
-                new ActionRowBuilder().addComponents(input)
+        const input = new TextInputBuilder()
+            .setCustomId(`q${q.question_order}`)
+            .setLabel(q.question)
+            .setRequired(true)
+            .setStyle(
+                q.input_type === "paragraph"
+                    ? TextInputStyle.Paragraph
+                    : TextInputStyle.Short
             );
 
-        }
-
-
-        return interaction.showModal(modal);
+        modal.addComponents(
+            new ActionRowBuilder().addComponents(input)
+        );
 
     }
 
+    return interaction.showModal(modal);
 
-    // Simple Ticket Creation Starts Here
+}
+
+
+
     await interaction.deferReply({
         flags: 64
     });
 
 
+
     if (button.disabled === true) {
+
         return interaction.editReply({
             content: "❌ This ticket category is currently closed."
         });
+
     }
+
 
 
     const { data: settings } = await supabase
@@ -117,6 +117,7 @@ module.exports = async (interaction) => {
         .select("*")
         .eq("guild_id", interaction.guild.id)
         .single();
+
 
 
     let number = 1;
@@ -182,11 +183,11 @@ module.exports = async (interaction) => {
 
     if (Array.isArray(settings?.staff_roles)) {
 
-        for (const roleId of settings.staff_roles) {
+        for (const role of settings.staff_roles) {
 
             overwrites.push({
 
-                id: roleId,
+                id: role,
 
                 allow: [
                     PermissionFlagsBits.ViewChannel,
@@ -205,38 +206,42 @@ module.exports = async (interaction) => {
     const channel = await interaction.guild.channels.create({
 
         name: ticketName,
+
         type: ChannelType.GuildText,
+
         parent: button.category_id,
+
         topic: interaction.user.id,
+
         permissionOverwrites: overwrites
 
     });
 
 
 
-    const ping = await channel.send({
-        content: "@here"
-    });
-
-
-    await ping.delete().catch(() => {});
-
-
-
     const embed = new EmbedBuilder()
 
-        .setColor("#e11d48")
+        .setColor(settings.embed_color || "#e11d48")
+
+        .setAuthor({
+            name: interaction.guild.name,
+            iconURL: interaction.guild.iconURL({ dynamic: true })
+        })
 
         .setTitle("🎫 Support Ticket")
 
         .setDescription(
-`Welcome ${interaction.user}
+`Hey ${interaction.user}, thanks for opening a ticket. A staff member will be with you shortly.
 
-A staff member will assist you shortly.
+**Opened By:** ${interaction.user}
+**Category:** ${button.label}`
+        )
 
-Category:
-**${button.label}**`
-        );
+        .setFooter({
+            text: `Ticket #${String(number).padStart(4, "0")}`
+        })
+
+        .setTimestamp();
 
 
 

@@ -2,17 +2,16 @@ const {
     EmbedBuilder,
     ActionRowBuilder,
     ButtonBuilder,
-    ButtonStyle
+    ButtonStyle,
+    MessageFlags
 } = require("discord.js");
 
 const supabase = require("../database/supabase");
-
 
 module.exports = async (interaction) => {
 
     if (!interaction.isButton()) return;
     if (interaction.customId !== "claim") return;
-    await interaction.deferUpdate();
 
     const { data: settings } = await supabase
         .from("ticket_settings")
@@ -21,16 +20,16 @@ module.exports = async (interaction) => {
         .single();
 
     if (!settings?.staff_role) {
-        return interaction.followUp({
+        return interaction.reply({
             content: "❌ No staff role configured.",
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
         });
     }
 
     if (!interaction.member.roles.cache.has(settings.staff_role)) {
-        return interaction.followUp({
+        return interaction.reply({
             content: "❌ Only staff members can claim tickets.",
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
         });
     }
 
@@ -41,16 +40,16 @@ module.exports = async (interaction) => {
         .single();
 
     if (!ticket) {
-        return interaction.followUp({
+        return interaction.reply({
             content: "❌ Ticket not found.",
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
         });
     }
 
     if (ticket.claimed_by) {
-        return interaction.followUp({
+        return interaction.reply({
             content: `❌ Already claimed by <@${ticket.claimed_by}>.`,
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
         });
     }
 
@@ -73,7 +72,6 @@ module.exports = async (interaction) => {
     );
 
     const row = new ActionRowBuilder().addComponents(
-
         new ButtonBuilder()
             .setCustomId("unclaim")
             .setLabel("Unclaim")
@@ -83,12 +81,11 @@ module.exports = async (interaction) => {
             .setCustomId("close")
             .setLabel("Close")
             .setStyle(ButtonStyle.Danger)
-
     );
 
-await interaction.message.edit({
-    embeds: [embed],
-    components: [row]
-});
+    return interaction.update({
+        embeds: [embed],
+        components: [row]
+    });
 
 };

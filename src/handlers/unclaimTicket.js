@@ -2,7 +2,8 @@ const {
     EmbedBuilder,
     ActionRowBuilder,
     ButtonBuilder,
-    ButtonStyle
+    ButtonStyle,
+    MessageFlags
 } = require("discord.js");
 
 const supabase = require("../database/supabase");
@@ -11,7 +12,6 @@ module.exports = async (interaction) => {
 
     if (!interaction.isButton()) return;
     if (interaction.customId !== "unclaim") return;
-    await interaction.deferUpdate();
 
     const { data: ticket } = await supabase
         .from("tickets")
@@ -22,14 +22,14 @@ module.exports = async (interaction) => {
     if (!ticket) {
         return interaction.reply({
             content: "❌ Ticket not found.",
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
         });
     }
 
     if (ticket.claimed_by !== interaction.user.id) {
         return interaction.reply({
             content: `❌ Only <@${ticket.claimed_by}> can unclaim this ticket.`,
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
         });
     }
 
@@ -62,9 +62,9 @@ module.exports = async (interaction) => {
 
     );
 
-await interaction.message.edit({
-    embeds: [embed],
-    components: [row]
-});
+    return interaction.update({
+        embeds: [embed],
+        components: [row]
+    });
 
 };

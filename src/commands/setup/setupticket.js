@@ -6,6 +6,7 @@ const {
     ButtonBuilder,
     ButtonStyle,
     ChannelType,
+    MessageFlags
 } = require("discord.js");
 
 const supabase = require("../../database/supabase");
@@ -25,7 +26,9 @@ module.exports = {
 
     async execute(interaction) {
 
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({
+            flags: MessageFlags.Ephemeral
+        });
 
         const channel = interaction.options.getChannel("channel");
 
@@ -37,18 +40,25 @@ module.exports = {
                 .eq("guild_id", interaction.guild.id)
                 .single();
 
+
             if (error && error.code !== "PGRST116") {
+
                 console.log(error);
 
                 return interaction.editReply({
                     content: "❌ Database error."
                 });
+
             }
 
-            // Check if old panel still exists
+
+            // Check if old panel exists
             if (existing?.message_id) {
 
-                const oldChannel = interaction.guild.channels.cache.get(existing.panel_channel);
+                const oldChannel = interaction.guild.channels.cache.get(
+                    existing.panel_channel
+                );
+
 
                 if (oldChannel) {
 
@@ -56,13 +66,17 @@ module.exports = {
 
                         await oldChannel.messages.fetch(existing.message_id);
 
+
                         return interaction.editReply({
                             content: "❌ A ticket panel already exists in this server."
                         });
 
+
                     } catch {
 
-                        console.log("Old panel deleted. Creating a new one...");
+                        console.log(
+                            "Old panel deleted. Creating a new one..."
+                        );
 
                     }
 
@@ -70,64 +84,108 @@ module.exports = {
 
             }
 
-            const embed = new EmbedBuilder()
-                .setColor("#e11d48")
-                .setTitle("🎫 Support Center")
-                .setDescription("Need help?\n\nChoose a category below.");
 
-            const row = new ActionRowBuilder().addComponents(
-                new ButtonBuilder()
-                    .setCustomId("ticket_general")
-                    .setLabel("General Support")
-                    .setStyle(ButtonStyle.Primary)
-            );
+
+            const embed = new EmbedBuilder()
+                .setColor(existing?.embed_color || "#e11d48")
+                .setTitle("🎫 Support Center")
+                .setDescription(
+                    "Need help?\n\nChoose a category below."
+                );
+
+
+
+            const row = new ActionRowBuilder()
+                .addComponents(
+
+                    new ButtonBuilder()
+                        .setCustomId("ticket_general")
+                        .setLabel("General Support")
+                        .setStyle(ButtonStyle.Primary)
+
+                );
+
+
 
             const panel = await channel.send({
+
                 embeds: [embed],
-                components: [row],
+
+                components: [row]
+
             });
 
+
+
             if (existing) {
+
 
                 const { error: updateError } = await supabase
                     .from("ticket_settings")
                     .update({
+
                         panel_channel: channel.id,
                         message_id: panel.id,
                         header: "Support Center",
                         description: "Need help?\n\nChoose a category below."
+
                     })
                     .eq("guild_id", interaction.guild.id);
 
-                if (updateError) console.log(updateError);
+
+
+                if (updateError) {
+                    console.log(updateError);
+                }
+
 
             } else {
+
 
                 const { error: insertError } = await supabase
                     .from("ticket_settings")
                     .insert({
+
                         guild_id: interaction.guild.id,
                         panel_channel: channel.id,
                         message_id: panel.id,
                         header: "Support Center",
                         description: "Need help?\n\nChoose a category below."
+
                     });
 
-                if (insertError) console.log(insertError);
+
+
+                if (insertError) {
+                    console.log(insertError);
+                }
+
 
             }
 
+
+
             return interaction.editReply({
+
                 content: `✅ Ticket panel created successfully in ${channel}`
+
             });
+
+
 
         } catch (err) {
 
+
             console.error(err);
 
+
+
             return interaction.editReply({
+
                 content: "❌ Something went wrong while creating the ticket panel."
+
             });
+
 
         }
 
