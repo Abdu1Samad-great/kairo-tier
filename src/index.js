@@ -1,9 +1,12 @@
-require("dotenv").config();
+try { require("dotenv").config(); } catch { /* dotenv is dev-only; prod uses real env vars */ }
 
 const { Client, Collection, GatewayIntentBits } = require("discord.js");
 
 const loadCommands = require("./handlers/commandHandler");
 const loadEvents = require("./handlers/eventHandler");
+const keepAlive = require("./keepAlive");
+
+keepAlive();
 
 const client = new Client({
     intents: [
