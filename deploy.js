@@ -1,4 +1,4 @@
-require("dotenv").config();
+try { require("dotenv").config(); } catch { /* dotenv is dev-only; prod uses real env vars */ }
 
 const fs = require("fs");
 const path = require("path");

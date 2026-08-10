@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: kairotiers-bot
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    autoDeploy: true
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      # Set the actual secret values in the Render dashboard, not here:
+      # DISCORD_TOKEN, CLIENT_ID, GUILD_ID, SUPABASE_URL, SUPABASE_KEY, etc.
