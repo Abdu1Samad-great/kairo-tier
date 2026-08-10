@@ -14,11 +14,13 @@ module.exports = {
 
     async execute(interaction) {
 
-        await interaction.reply({
-            content:
-                "✏️ **Send the new panel description in this channel.**\n\nType `cancel` to cancel.\nYou have **60 seconds**.",
-            ephemeral: true
-        });
+        if (!interaction.deferred && !interaction.replied) {
+            await interaction.reply({
+                content:
+                    "✏️ **Send the new panel description in this channel.**\n\nType `cancel` to cancel.\nYou have **60 seconds.**",
+                ephemeral: true
+            });
+        }
 
         const filter = (m) => m.author.id === interaction.user.id;
 
@@ -31,14 +33,12 @@ module.exports = {
         collector.on("collect", async (message) => {
 
             if (message.content.toLowerCase() === "cancel") {
-
                 await message.delete().catch(() => {});
 
                 return interaction.followUp({
                     content: "❌ Description edit cancelled.",
                     ephemeral: true
                 });
-
             }
 
             const { data: settings } = await supabase
@@ -48,12 +48,10 @@ module.exports = {
                 .single();
 
             if (!settings) {
-
                 return interaction.followUp({
                     content: "❌ Run /setupticket first.",
                     ephemeral: true
                 });
-
             }
 
             await supabase
@@ -75,17 +73,12 @@ module.exports = {
         });
 
         collector.on("end", async (collected) => {
-
             if (collected.size === 0) {
-
                 await interaction.followUp({
                     content: "⏰ You didn't send a description in time.",
                     ephemeral: true
                 }).catch(() => {});
-
             }
-
         });
-
     }
 };
