@@ -3,7 +3,7 @@ try { require("dotenv").config(); } catch { /* dotenv is dev-only; prod uses rea
 const { Client, Collection, GatewayIntentBits } = require("discord.js");
 
 const loadCommands = require("./handlers/commandHandler");
-const loadEvents = require("./handlers/eventHandler");SSS
+const loadEvents = require("./handlers/eventHandler");
 
 const client = new Client({
     intents: [
