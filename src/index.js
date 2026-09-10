@@ -4,7 +4,6 @@ const { Client, Collection, GatewayIntentBits } = require("discord.js");
 
 const loadCommands = require("./handlers/commandHandler");
 const loadEvents = require("./handlers/eventHandler");
-const keepAlive = require("./keepAlive");
 
 keepAlive();
 

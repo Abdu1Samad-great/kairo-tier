@@ -14,7 +14,7 @@ module.exports = async (interaction) => {
     if (interaction.customId !== "close") return;
 
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-
+    
     const { data: ticket } = await supabase
         .from("tickets")
         .select("*")
