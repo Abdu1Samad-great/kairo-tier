@@ -13,14 +13,39 @@ const {
 
 const supabase = require("../database/supabase");
 
+// Prevent the same interaction from being processed twice
+const processingInteractions = new Set();
+
 module.exports = async (interaction) => {
 
     if (!interaction.isButton()) return;
     if (!interaction.customId.startsWith("ticket_")) return;
 
+    // Prevent duplicate handling of the same Discord interaction
+    if (processingInteractions.has(interaction.id)) {
+        console.log(
+            `⚠️ Duplicate ticket interaction ignored: ${interaction.id}`
+        );
+        return;
+    }
+
+    processingInteractions.add(interaction.id);
+
+    // Remove from memory after a short time
+    setTimeout(() => {
+        processingInteractions.delete(interaction.id);
+    }, 15000);
+
     try {
 
-        const buttonId = interaction.customId.replace("ticket_", "");
+        const buttonId = interaction.customId.replace(
+            "ticket_",
+            ""
+        );
+
+        // =========================
+        // GET BUTTON
+        // =========================
 
         const { data: button, error } = await supabase
             .from("ticket_buttons")
@@ -29,28 +54,60 @@ module.exports = async (interaction) => {
             .single();
 
         if (error || !button) {
-            return interaction.reply({
-                content: "❌ Invalid ticket button.",
-                flags: MessageFlags.Ephemeral
-            });
+
+            if (!interaction.replied && !interaction.deferred) {
+
+                return await interaction.reply({
+                    content: "❌ Invalid ticket button.",
+                    flags: MessageFlags.Ephemeral
+                });
+
+            }
+
+            return;
+        }
+
+        // =========================
+        // DISABLED
+        // =========================
+
+        if (button.disabled === true) {
+
+            if (!interaction.replied && !interaction.deferred) {
+
+                return await interaction.reply({
+                    content:
+                        "❌ This ticket category is currently closed.",
+                    flags: MessageFlags.Ephemeral
+                });
+
+            }
+
+            return;
         }
 
         // =========================
         // QUESTIONS
         // =========================
 
-        const { data: questions, error: questionError } = await supabase
+        const {
+            data: questions,
+            error: questionError
+        } = await supabase
             .from("ticket_questions")
             .select("*")
             .eq("button_id", button.id)
             .order("question_order");
 
         if (questionError) {
-            console.error("QUESTION ERROR:", questionError);
+            console.error(
+                "QUESTION ERROR:",
+                questionError
+            );
         }
 
         // =========================
-        // MODAL
+        // SHOW MODAL
         // =========================
 
         if (questions && questions.length > 0) {
@@ -58,16 +115,20 @@ module.exports = async (interaction) => {
             const modalQuestions = questions.slice(0, 5);
 
             const modal = new ModalBuilder()
-                .setCustomId(`ticket_modal_${button.id}`)
+                .setCustomId(
+                    `ticket_modal_${button.id}`
+                )
                 .setTitle(
-                    button.label.length > 45
-                        ? button.label.substring(0, 42) + "..."
-                        : button.label
+                    String(button.label).length > 45
+                        ? String(button.label).substring(0, 42) + "..."
+                        : String(button.label)
                 );
 
             for (const q of modalQuestions) {
 
-                const question = String(q.question || "Question");
+                const question = String(
+                    q.question || "Question"
+                );
 
                 const label =
                     question.length > 45
@@ -80,7 +141,9 @@ module.exports = async (interaction) => {
                         : question;
 
                 const input = new TextInputBuilder()
-                    .setCustomId(`q${q.question_order}`)
+                    .setCustomId(
+                        `q${q.question_order}`
+                    )
                     .setLabel(label)
                     .setPlaceholder(placeholder)
                     .setRequired(true)
@@ -91,10 +154,13 @@ module.exports = async (interaction) => {
                     );
 
                 modal.addComponents(
-                    new ActionRowBuilder().addComponents(input)
+                    new ActionRowBuilder()
+                        .addComponents(input)
                 );
             }
 
+            // IMPORTANT:
+            // Do NOT deferReply() or reply() before showModal()
             return await interaction.showModal(modal);
         }
 
@@ -107,27 +173,26 @@ module.exports = async (interaction) => {
         });
 
         // =========================
-        // DISABLED
-        // =========================
-
-        if (button.disabled === true) {
-            return interaction.editReply({
-                content: "❌ This ticket category is currently closed."
-            });
-        }
-
-        // =========================
         // SETTINGS
         // =========================
 
-        const { data: settings, error: settingsError } = await supabase
+        const {
+            data: settings,
+            error: settingsError
+        } = await supabase
             .from("ticket_settings")
             .select("*")
             .eq("guild_id", interaction.guild.id)
             .single();
 
-        if (settingsError) {
-            console.error("SETTINGS ERROR:", settingsError);
+        if (
+            settingsError &&
+            settingsError.code !== "PGRST116"
+        ) {
+            console.error(
+                "SETTINGS ERROR:",
+                settingsError
+            );
         }
 
         // =========================
@@ -136,11 +201,17 @@ module.exports = async (interaction) => {
 
         if (
             settings?.blacklist_role &&
-            interaction.guild.roles.cache.has(settings.blacklist_role) &&
-            interaction.member.roles.cache.has(settings.blacklist_role)
+            interaction.guild.roles.cache.has(
+                String(settings.blacklist_role)
+            ) &&
+            interaction.member.roles.cache.has(
+                String(settings.blacklist_role)
+            )
         ) {
-            return interaction.editReply({
-                content: "❌ You are blacklisted from creating tickets."
+
+            return await interaction.editReply({
+                content:
+                    "❌ You are blacklisted from creating tickets."
             });
         }
 
@@ -148,40 +219,73 @@ module.exports = async (interaction) => {
         // COUNTER
         // =========================
 
-        const { data: counter } = await supabase
+        const {
+            data: counter,
+            error: counterError
+        } = await supabase
             .from("ticket_counter")
             .select("*")
             .eq("guild_id", interaction.guild.id)
             .single();
 
+        if (
+            counterError &&
+            counterError.code !== "PGRST116"
+        ) {
+            console.error(
+                "COUNTER ERROR:",
+                counterError
+            );
+        }
+
         let number = 1;
 
         if (counter) {
 
-            number = counter.current + 1;
+            number = Number(counter.current) + 1;
 
-            await supabase
-                .from("ticket_counter")
-                .update({
-                    current: number
-                })
-                .eq("guild_id", interaction.guild.id);
+            const { error: updateError } =
+                await supabase
+                    .from("ticket_counter")
+                    .update({
+                        current: number
+                    })
+                    .eq(
+                        "guild_id",
+                        interaction.guild.id
+                    );
+
+            if (updateError) {
+                console.error(
+                    "COUNTER UPDATE ERROR:",
+                    updateError
+                );
+            }
 
         } else {
 
-            await supabase
-                .from("ticket_counter")
-                .insert({
-                    guild_id: interaction.guild.id,
-                    current: 1
-                });
+            const { error: insertError } =
+                await supabase
+                    .from("ticket_counter")
+                    .insert({
+                        guild_id:
+                            interaction.guild.id,
+                        current: 1
+                    });
+
+            if (insertError) {
+                console.error(
+                    "COUNTER INSERT ERROR:",
+                    insertError
+                );
+            }
         }
 
         // =========================
         // CHANNEL NAME
         // =========================
 
-        let cleanName = button.label
+        let cleanName = String(button.label || "ticket")
             .toLowerCase()
             .replace(/[^a-z0-9\s-]/g, "")
             .replace(/\s+/g, "-")
@@ -204,6 +308,7 @@ module.exports = async (interaction) => {
 
             {
                 id: interaction.guild.roles.everyone.id,
+
                 deny: [
                     PermissionFlagsBits.ViewChannel
                 ]
@@ -211,6 +316,7 @@ module.exports = async (interaction) => {
 
             {
                 id: interaction.user.id,
+
                 allow: [
                     PermissionFlagsBits.ViewChannel,
                     PermissionFlagsBits.SendMessages,
@@ -228,16 +334,24 @@ module.exports = async (interaction) => {
 
             for (const roleId of settings.staff_roles) {
 
-                // Make sure ID is a string
                 const id = String(roleId).trim();
 
-                // Check if role actually exists
-                const role = interaction.guild.roles.cache.get(id);
+                if (!/^\d+$/.test(id)) {
+                    console.log(
+                        `⚠️ Invalid staff role ID: ${id}`
+                    );
+                    continue;
+                }
+
+                const role =
+                    interaction.guild.roles.cache.get(id);
 
                 if (!role) {
+
                     console.log(
-                        `⚠️ Skipping invalid/deleted staff role: ${id}`
+                        `⚠️ Skipping missing staff role: ${id}`
                     );
+
                     continue;
                 }
 
@@ -252,28 +366,27 @@ module.exports = async (interaction) => {
                     ]
 
                 });
-
             }
-
         }
 
         // =========================
         // CREATE CHANNEL
         // =========================
 
-        const channel = await interaction.guild.channels.create({
+        const channel =
+            await interaction.guild.channels.create({
 
-            name: ticketName,
+                name: ticketName,
 
-            type: ChannelType.GuildText,
+                type: ChannelType.GuildText,
 
-            parent: button.category_id,
+                parent: button.category_id,
 
-            topic: interaction.user.id,
+                topic: interaction.user.id,
 
-            permissionOverwrites: overwrites
+                permissionOverwrites: overwrites
 
-        });
+            });
 
         // =========================
         // EMBED
@@ -281,13 +394,20 @@ module.exports = async (interaction) => {
 
         const embed = new EmbedBuilder()
 
-            .setColor(settings?.embed_color || "#e11d48")
+            .setColor(
+                settings?.embed_color || "#e11d48"
+            )
 
             .setAuthor({
-                name: interaction.guild.name,
-                iconURL: interaction.guild.iconURL({
-                    dynamic: true
-                })
+
+                name:
+                    interaction.guild.name,
+
+                iconURL:
+                    interaction.guild.iconURL({
+                        dynamic: true
+                    }) || undefined
+
             })
 
             .setTitle("🎫 Support Ticket")
@@ -300,7 +420,8 @@ module.exports = async (interaction) => {
             )
 
             .setFooter({
-                text: `Ticket #${String(number).padStart(4, "0")}`
+                text:
+                    `Ticket #${String(number).padStart(4, "0")}`
             })
 
             .setTimestamp();
@@ -309,20 +430,25 @@ module.exports = async (interaction) => {
         // BUTTONS
         // =========================
 
-        const row = new ActionRowBuilder()
-            .addComponents(
+        const row =
+            new ActionRowBuilder()
+                .addComponents(
 
-                new ButtonBuilder()
-                    .setCustomId("claim")
-                    .setLabel("Claim")
-                    .setStyle(ButtonStyle.Success),
+                    new ButtonBuilder()
+                        .setCustomId("claim")
+                        .setLabel("Claim")
+                        .setStyle(
+                            ButtonStyle.Success
+                        ),
 
-                new ButtonBuilder()
-                    .setCustomId("close")
-                    .setLabel("Close")
-                    .setStyle(ButtonStyle.Danger)
+                    new ButtonBuilder()
+                        .setCustomId("close")
+                        .setLabel("Close")
+                        .setStyle(
+                            ButtonStyle.Danger
+                        )
 
-            );
+                );
 
         // =========================
         // SEND MESSAGE
@@ -330,11 +456,16 @@ module.exports = async (interaction) => {
 
         await channel.send({
 
-            content: `<@${interaction.user.id}>`,
+            content:
+                `<@${interaction.user.id}>`,
 
-            embeds: [embed],
+            embeds: [
+                embed
+            ],
 
-            components: [row]
+            components: [
+                row
+            ]
 
         });
 
@@ -342,38 +473,49 @@ module.exports = async (interaction) => {
         // SAVE TICKET
         // =========================
 
-        const { error: ticketError } = await supabase
+        const {
+            error: ticketError
+        } = await supabase
             .from("tickets")
             .insert({
 
-                guild_id: interaction.guild.id,
+                guild_id:
+                    interaction.guild.id,
 
-                channel_id: channel.id,
+                channel_id:
+                    channel.id,
 
-                owner_id: interaction.user.id,
+                owner_id:
+                    interaction.user.id,
 
-                category: button.label,
+                category:
+                    button.label,
 
-                claimed_by: null,
+                claimed_by:
+                    null,
 
-                status: "open"
+                status:
+                    "open"
 
             });
 
         if (ticketError) {
+
             console.error(
                 "TICKET DATABASE ERROR:",
                 ticketError
             );
+
         }
 
         // =========================
         // SUCCESS
         // =========================
 
-        return interaction.editReply({
+        return await interaction.editReply({
 
-            content: `✅ Ticket Created: ${channel}`
+            content:
+                `✅ Ticket Created: ${channel}`
 
         });
 
@@ -389,7 +531,7 @@ module.exports = async (interaction) => {
             interaction.replied
         ) {
 
-            return interaction.editReply({
+            return await interaction.editReply({
 
                 content:
                     `❌ Something went wrong while creating the ticket.\n\`${error.message}\``
@@ -398,15 +540,15 @@ module.exports = async (interaction) => {
 
         }
 
-        return interaction.reply({
+        return await interaction.reply({
 
             content:
                 `❌ Something went wrong while creating the ticket.\n\`${error.message}\``,
 
-            flags: MessageFlags.Ephemeral
+            flags:
+                MessageFlags.Ephemeral
 
         }).catch(() => {});
 
     }
-
 };
