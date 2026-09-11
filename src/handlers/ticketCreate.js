@@ -35,7 +35,10 @@ module.exports = async (interaction) => {
             });
         }
 
-        // Get questions
+        // =========================
+        // QUESTIONS
+        // =========================
+
         const { data: questions, error: questionError } = await supabase
             .from("ticket_questions")
             .select("*")
@@ -52,7 +55,6 @@ module.exports = async (interaction) => {
 
         if (questions && questions.length > 0) {
 
-            // Discord allows maximum 5 inputs in one modal
             const modalQuestions = questions.slice(0, 5);
 
             const modal = new ModalBuilder()
@@ -65,15 +67,17 @@ module.exports = async (interaction) => {
 
             for (const q of modalQuestions) {
 
+                const question = String(q.question || "Question");
+
                 const label =
-                    q.question.length > 45
-                        ? q.question.substring(0, 42) + "..."
-                        : q.question;
+                    question.length > 45
+                        ? question.substring(0, 42) + "..."
+                        : question;
 
                 const placeholder =
-                    q.question.length > 100
-                        ? q.question.substring(0, 97) + "..."
-                        : q.question;
+                    question.length > 100
+                        ? question.substring(0, 97) + "..."
+                        : question;
 
                 const input = new TextInputBuilder()
                     .setCustomId(`q${q.question_order}`)
@@ -95,21 +99,27 @@ module.exports = async (interaction) => {
         }
 
         // =========================
-        // NORMAL TICKET
+        // DEFER
         // =========================
 
         await interaction.deferReply({
             flags: MessageFlags.Ephemeral
         });
 
-        // Check disabled
+        // =========================
+        // DISABLED
+        // =========================
+
         if (button.disabled === true) {
             return interaction.editReply({
                 content: "❌ This ticket category is currently closed."
             });
         }
 
-        // Get settings
+        // =========================
+        // SETTINGS
+        // =========================
+
         const { data: settings, error: settingsError } = await supabase
             .from("ticket_settings")
             .select("*")
@@ -120,9 +130,13 @@ module.exports = async (interaction) => {
             console.error("SETTINGS ERROR:", settingsError);
         }
 
-        // Blacklist
+        // =========================
+        // BLACKLIST
+        // =========================
+
         if (
             settings?.blacklist_role &&
+            interaction.guild.roles.cache.has(settings.blacklist_role) &&
             interaction.member.roles.cache.has(settings.blacklist_role)
         ) {
             return interaction.editReply({
@@ -131,7 +145,7 @@ module.exports = async (interaction) => {
         }
 
         // =========================
-        // TICKET NUMBER
+        // COUNTER
         // =========================
 
         const { data: counter } = await supabase
@@ -167,12 +181,20 @@ module.exports = async (interaction) => {
         // CHANNEL NAME
         // =========================
 
+        let cleanName = button.label
+            .toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, "")
+            .replace(/\s+/g, "-")
+            .replace(/^-+|-+$/g, "");
+
+        if (!cleanName) {
+            cleanName = "ticket";
+        }
+
+        cleanName = cleanName.substring(0, 70);
+
         const ticketName =
-            `${button.label
-                .toLowerCase()
-                .replace(/[^a-z0-9\s-]/g, "")
-                .replace(/\s+/g, "-")
-                .substring(0, 70)}-${String(number).padStart(4, "0")}`;
+            `${cleanName}-${String(number).padStart(4, "0")}`;
 
         // =========================
         // PERMISSIONS
@@ -198,20 +220,41 @@ module.exports = async (interaction) => {
 
         ];
 
+        // =========================
+        // STAFF ROLES
+        // =========================
+
         if (Array.isArray(settings?.staff_roles)) {
 
-            for (const role of settings.staff_roles) {
+            for (const roleId of settings.staff_roles) {
+
+                // Make sure ID is a string
+                const id = String(roleId).trim();
+
+                // Check if role actually exists
+                const role = interaction.guild.roles.cache.get(id);
+
+                if (!role) {
+                    console.log(
+                        `⚠️ Skipping invalid/deleted staff role: ${id}`
+                    );
+                    continue;
+                }
 
                 overwrites.push({
-                    id: role,
+
+                    id: role.id,
+
                     allow: [
                         PermissionFlagsBits.ViewChannel,
                         PermissionFlagsBits.SendMessages,
                         PermissionFlagsBits.ReadMessageHistory
                     ]
+
                 });
 
             }
+
         }
 
         // =========================
@@ -242,7 +285,9 @@ module.exports = async (interaction) => {
 
             .setAuthor({
                 name: interaction.guild.name,
-                iconURL: interaction.guild.iconURL({ dynamic: true })
+                iconURL: interaction.guild.iconURL({
+                    dynamic: true
+                })
             })
 
             .setTitle("🎫 Support Ticket")
@@ -280,7 +325,7 @@ module.exports = async (interaction) => {
             );
 
         // =========================
-        // SEND TICKET
+        // SEND MESSAGE
         // =========================
 
         await channel.send({
@@ -294,7 +339,7 @@ module.exports = async (interaction) => {
         });
 
         // =========================
-        // DATABASE
+        // SAVE TICKET
         // =========================
 
         const { error: ticketError } = await supabase
@@ -316,8 +361,15 @@ module.exports = async (interaction) => {
             });
 
         if (ticketError) {
-            console.error("TICKET DATABASE ERROR:", ticketError);
+            console.error(
+                "TICKET DATABASE ERROR:",
+                ticketError
+            );
         }
+
+        // =========================
+        // SUCCESS
+        // =========================
 
         return interaction.editReply({
 
@@ -327,20 +379,34 @@ module.exports = async (interaction) => {
 
     } catch (error) {
 
-        console.error("TICKET CREATE ERROR:", error);
+        console.error(
+            "TICKET CREATE ERROR:",
+            error
+        );
 
-        if (interaction.deferred || interaction.replied) {
+        if (
+            interaction.deferred ||
+            interaction.replied
+        ) {
 
             return interaction.editReply({
-                content: "❌ Something went wrong while creating the ticket."
+
+                content:
+                    `❌ Something went wrong while creating the ticket.\n\`${error.message}\``
+
             }).catch(() => {});
 
         }
 
         return interaction.reply({
-            content: "❌ Something went wrong while creating the ticket.",
+
+            content:
+                `❌ Something went wrong while creating the ticket.\n\`${error.message}\``,
+
             flags: MessageFlags.Ephemeral
+
         }).catch(() => {});
 
     }
+
 };
