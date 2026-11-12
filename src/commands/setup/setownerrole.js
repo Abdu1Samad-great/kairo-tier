@@ -7,10 +7,10 @@ const {
 const supabase = require("../../database/supabase");
 
 module.exports = {
+    permission: "admin",
     data: new SlashCommandBuilder()
         .setName("setownerrole")
         .setDescription("Set the ticket owner role.")
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
 
         .addRoleOption(option =>
             option
@@ -38,12 +38,12 @@ module.exports = {
             console.log(error);
 
             return interaction.editReply({
-                content: "❌ Failed to save owner role."
+                content: "<:Cross:1558553359642918952> Failed to save owner role."
             });
         }
 
         return interaction.editReply({
-            content: `✅ Owner role set to ${role}.`
+            content: `<:tick:1558554326887047228> Owner role set to ${role}.`
         });
 
     }

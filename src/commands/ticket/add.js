@@ -7,6 +7,7 @@ const {
 const supabase = require("../../database/supabase");
 
 module.exports = {
+    permission: "staff",
     data: new SlashCommandBuilder()
         .setName("add")
         .setDescription("Add a user to the current ticket.")
@@ -25,9 +26,6 @@ module.exports = {
 
         try {
 
-            // =========================
-            // CHECK IF TICKET
-            // =========================
 
             const { data: ticket, error: ticketError } = await supabase
                 .from("tickets")
@@ -37,13 +35,10 @@ module.exports = {
 
             if (ticketError || !ticket) {
                 return interaction.editReply({
-                    content: "❌ This command can only be used inside a ticket."
+                    content: "<:Cross:1558553359642918952> This command can only be used inside a ticket."
                 });
             }
 
-            // =========================
-            // GET SETTINGS
-            // =========================
 
             const { data: settings, error: settingsError } = await supabase
                 .from("ticket_settings")
@@ -53,75 +48,14 @@ module.exports = {
 
             if (settingsError || !settings) {
                 return interaction.editReply({
-                    content: "❌ Ticket system is not configured."
+                    content: "<:Cross:1558553359642918952> Ticket system is not configured."
                 });
             }
 
-            // =========================
-            // GET ROLE IDs
-            // =========================
-
-            let staffRoles = settings.staff_roles;
-
-            if (!staffRoles) {
-                staffRoles = [];
-            } else if (typeof staffRoles === "string") {
-                try {
-                    staffRoles = JSON.parse(staffRoles);
-                } catch {
-                    staffRoles = [];
-                }
-            }
-
-            if (!Array.isArray(staffRoles)) {
-                staffRoles = [];
-            }
-
-            staffRoles = staffRoles.map(id => String(id));
-
-            const ownerRole = settings.owner_role
-                ? String(settings.owner_role)
-                : null;
-
-            const adminRole = settings.admin_role
-                ? String(settings.admin_role)
-                : null;
-
-            // =========================
-            // PERMISSION CHECK
-            // =========================
-
-            const memberRoles = interaction.member.roles.cache;
-
-            const isOwner =
-                ownerRole &&
-                memberRoles.has(ownerRole);
-
-            const isAdmin =
-                adminRole &&
-                memberRoles.has(adminRole);
-
-            const isStaff =
-                staffRoles.some(roleId =>
-                    memberRoles.has(roleId)
-                );
-
-            // Allow Owner OR Admin OR Staff
-            if (!isOwner && !isAdmin && !isStaff) {
-                return interaction.editReply({
-                    content: "❌ You don't have permission to use this command."
-                });
-            }
-
-            // =========================
             // GET USER
-            // =========================
 
             const user = interaction.options.getUser("user");
 
-            // =========================
-            // CHECK ALREADY HAS ACCESS
-            // =========================
 
             const perms = interaction.channel.permissionsFor(user.id);
 
@@ -130,13 +64,10 @@ module.exports = {
                 perms.has(PermissionFlagsBits.ViewChannel)
             ) {
                 return interaction.editReply({
-                    content: `❌ ${user} is already in this ticket.`
+                    content: `<:Cross:1558553359642918952> ${user} is already in this ticket.`
                 });
             }
 
-            // =========================
-            // ADD USER TO TICKET
-            // =========================
 
             await interaction.channel.permissionOverwrites.edit(
                 user.id,
@@ -147,9 +78,6 @@ module.exports = {
                 }
             );
 
-            // =========================
-            // CHECK FOR VC
-            // =========================
 
             const vc = interaction.guild.channels.cache.find(
                 channel =>
@@ -169,12 +97,10 @@ module.exports = {
                 );
             }
 
-            // =========================
             // SUCCESS
-            // =========================
 
             return interaction.editReply({
-                content: `✅ ${user} has been added to this ticket.`
+                content: `<:tick:1558554326887047228> ${user} has been added to this ticket.`
             });
 
         } catch (error) {
@@ -183,7 +109,7 @@ module.exports = {
 
             return interaction.editReply({
                 content:
-                    `❌ Something went wrong.\n\`${error.message}\``
+                    `<:Cross:1558553359642918952> Something went wrong.\n\`${error.message}\``
             }).catch(() => {});
 
         }

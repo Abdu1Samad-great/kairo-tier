@@ -8,10 +8,10 @@ const {
 const supabase = require("../../database/supabase");
 
 module.exports = {
+    permission: "staff",
     data: new SlashCommandBuilder()
         .setName("open")
-        .setDescription("Reopen a closed ticket.")
-        .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
+        .setDescription("Reopen a closed ticket."),
 
     async execute(interaction) {
 
@@ -19,7 +19,6 @@ module.exports = {
             flags: MessageFlags.Ephemeral
         });
 
-        // Check ticket
         const { data: ticket } = await supabase
             .from("tickets")
             .select("*")
@@ -28,17 +27,16 @@ module.exports = {
 
         if (!ticket) {
             return interaction.editReply({
-                content: "❌ This is not a ticket."
+                content: "<:Cross:1558553359642918952> This is not a ticket."
             });
         }
 
         if (ticket.status !== "closed") {
             return interaction.editReply({
-                content: "❌ This ticket is not closed."
+                content: "<:Cross:1558553359642918952> This ticket is not closed."
             });
         }
 
-        // Move back
         await interaction.channel.setParent(ticket.original_category);
 
         // Rename
@@ -46,14 +44,12 @@ module.exports = {
             interaction.channel.name.replace(/^closed-/, "")
         );
 
-        // Give owner send permission
         await interaction.channel.permissionOverwrites.edit(ticket.owner_id, {
             SendMessages: true,
             ViewChannel: true,
             ReadMessageHistory: true
         });
 
-// Update DB
 await supabase
     .from("tickets")
     .update({
@@ -64,7 +60,7 @@ await supabase
 
         const embed = new EmbedBuilder()
             .setColor("Green")
-            .setTitle("🔓 Ticket Reopened")
+            .setTitle("<:queue_open:1534872848705785937> Ticket Reopened")
             .setDescription(`This ticket has been reopened by ${interaction.user}.`);
 
         await interaction.channel.send({
@@ -72,7 +68,7 @@ await supabase
         });
 
         return interaction.editReply({
-            content: "✅ Ticket reopened."
+            content: "<:tick:1558554326887047228> Ticket reopened."
         });
 
     }

@@ -6,6 +6,7 @@ const {
 const supabase = require("../../database/supabase");
 
 module.exports = {
+    permission: "owner",
     data: new SlashCommandBuilder()
         .setName("rename")
         .setDescription("Rename the current ticket.")
@@ -22,7 +23,6 @@ module.exports = {
             flags: MessageFlags.Ephemeral
         });
 
-        // Check ticket
         const { data: ticket } = await supabase
             .from("tickets")
             .select("*")
@@ -31,23 +31,7 @@ module.exports = {
 
         if (!ticket) {
             return interaction.editReply({
-                content: "❌ This is not a ticket."
-            });
-        }
-
-        // Owner Role Check
-        const { data: settings } = await supabase
-            .from("ticket_settings")
-            .select("owner_role")
-            .eq("guild_id", interaction.guild.id)
-            .single();
-
-        if (
-            !settings?.owner_role ||
-            !interaction.member.roles.cache.has(settings.owner_role)
-        ) {
-            return interaction.editReply({
-                content: "❌ Only the Owner Role can use this command."
+                content: "<:Cross:1558553359642918952> This is not a ticket."
             });
         }
 
@@ -56,7 +40,6 @@ module.exports = {
             .replace(/[^a-z0-9\s-]/g, "")
             .replace(/\s+/g, "-");
 
-        // Keep ticket number
         const match = interaction.channel.name.match(/(\d+)$/);
 
         if (match) {
@@ -66,7 +49,7 @@ module.exports = {
         await interaction.channel.setName(newName);
 
         return interaction.editReply({
-            content: `✅ Ticket renamed to **${newName}**`
+            content: `<:tick:1558554326887047228> Ticket renamed to **${newName}**`
         });
 
     }

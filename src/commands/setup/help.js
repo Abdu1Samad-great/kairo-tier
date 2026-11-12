@@ -8,6 +8,7 @@ const supabase = require("../../database/supabase");
 
 module.exports = {
 
+    permission: "user",
     data: new SlashCommandBuilder()
         .setName("help")
         .setDescription("View all available commands."),
@@ -32,9 +33,10 @@ module.exports = {
             .addFields(
 
                 {
-                    name: "🎫 Ticket Management",
+                    name: "<:forensic:1563646085971583006> Ticket Management",
  value: `
 /add — Add a user to the current ticket.
+/closeticket - Close the current ticket directly.
 /addrole — Add a role to the current ticket.
 /remove — Remove a user from the current ticket.
 /removerole — Remove a role from the current ticket.
@@ -54,7 +56,7 @@ module.exports = {
                 },
 
                 {
-                    name: "📝 Ticket Panels",
+                    name: "<:Updates:1552280778916761671> Ticket Panels",
                     value:
                     "`/setupticket` — Send the ticket panel.\n" +
                     "`/addbutton` — Add a ticket button.\n" +
@@ -66,21 +68,21 @@ module.exports = {
                 },
 
                 {
-                    name: "🎤 Voice Channels",
+                    name: "<:Updates:1552280778916761671> Voice Channels",
                     value:
                     "`/createvc` — Create a voice channel for the current ticket.\n" +
                     "`/deletevc` — Delete the ticket voice channel."
                 },
 
                 {
-                    name: "🗑️ Bulk Actions",
+                    name: "<:triall_staff:1533541983409274911> Bulk Actions",
                     value:
                     "`/deleteall` — Delete all closed tickets.\n" +
                     "`/purgeall` — Generate transcripts and permanently delete all closed tickets."
                 },
 
                 {
-                    name: "👮 Roles & Permissions",
+                    name: "<:developer:1533542330257375452> Roles & Permissions",
                     value:
                     "`/setadminrole` — Set the Admin role.\n" +
                     "`/setstaffrole` — Set the Staff role.\n" +

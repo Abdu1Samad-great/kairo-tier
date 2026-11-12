@@ -6,6 +6,7 @@ const {
 const supabase = require("../../database/supabase");
 
 module.exports = {
+    permission: "owner",
     data: new SlashCommandBuilder()
         .setName("delete")
         .setDescription("Delete a ticket permanently."),
@@ -16,7 +17,6 @@ module.exports = {
             flags: MessageFlags.Ephemeral
         });
 
-        // Ticket check
         const { data: ticket } = await supabase
             .from("tickets")
             .select("*")
@@ -25,27 +25,10 @@ module.exports = {
 
         if (!ticket) {
             return interaction.editReply({
-                content: "❌ This is not a ticket."
+                content: "<:Cross:1558553359642918952> This is not a ticket."
             });
         }
 
-        // Owner Role Check
-        const { data: settings } = await supabase
-            .from("ticket_settings")
-            .select("owner_role")
-            .eq("guild_id", interaction.guild.id)
-            .single();
-
-        if (
-            !settings?.owner_role ||
-            !interaction.member.roles.cache.has(settings.owner_role)
-        ) {
-            return interaction.editReply({
-                content: "❌ Only the Owner Role can use this command."
-            });
-        }
-
-        // Delete linked VC
         const vc = interaction.guild.channels.cache.find(
             c =>
                 c.parentId === interaction.channel.parentId &&
@@ -57,14 +40,13 @@ module.exports = {
             await vc.delete().catch(() => {});
         }
 
-        // Remove database
         await supabase
             .from("tickets")
             .delete()
             .eq("channel_id", interaction.channel.id);
 
         await interaction.editReply({
-            content: "✅ Ticket deleted."
+            content: "<:tick:1558554326887047228> Ticket deleted."
         });
 
         setTimeout(async () => {

@@ -8,6 +8,7 @@ const discordTranscripts = require("discord-html-transcripts");
 const supabase = require("../../database/supabase");
 
 module.exports = {
+    permission: "owner",
     data: new SlashCommandBuilder()
         .setName("purgeall")
         .setDescription("Purge all closed tickets."),
@@ -25,18 +26,10 @@ module.exports = {
             .eq("guild_id", interaction.guild.id)
             .single();
 
-        if (
-            !settings?.owner_role ||
-            !interaction.member.roles.cache.has(settings.owner_role)
-        ) {
-            return interaction.editReply({
-                content: "❌ Only the configured Owner Role can use this command."
-            });
-        }
 
         if (!settings.closed_category) {
             return interaction.editReply({
-                content: "❌ Closed ticket category is not configured."
+                content: "<:Cross:1558553359642918952> Closed ticket category is not configured."
             });
         }
 
@@ -46,7 +39,7 @@ module.exports = {
 
         if (!closedCategory) {
             return interaction.editReply({
-                content: "❌ Closed ticket category not found."
+                content: "<:Cross:1558553359642918952> Closed ticket category not found."
             });
         }
 
@@ -56,7 +49,7 @@ module.exports = {
 
         if (tickets.size === 0) {
             return interaction.editReply({
-                content: "❌ No closed tickets found."
+                content: "<:Cross:1558553359642918952> No closed tickets found."
             });
         }
 
@@ -66,7 +59,6 @@ module.exports = {
 
             try {
 
-                // Transcript
                 const transcript =
                     await discordTranscripts.createTranscript(channel, {
                         filename: `${channel.name}.html`,
@@ -74,7 +66,6 @@ module.exports = {
                         poweredBy: false
                     });
 
-                // Send transcript
                 if (settings.transcript_channel) {
 
                     const logChannel =
@@ -93,7 +84,6 @@ module.exports = {
 
                 }
 
-                // Delete linked VC
                 const vc = interaction.guild.channels.cache.find(c =>
                     c.parentId === channel.parentId &&
                     c.name === channel.name &&
@@ -104,13 +94,11 @@ module.exports = {
                     await vc.delete().catch(() => {});
                 }
 
-                // Remove DB entry
                 await supabase
                     .from("tickets")
                     .delete()
                     .eq("channel_id", channel.id);
 
-                // Delete channel
                 await channel.delete().catch(() => {});
 
                 purged++;
@@ -125,7 +113,7 @@ module.exports = {
         }
 
         return interaction.editReply({
-            content: `✅ Successfully purged **${purged}** closed ticket(s).`
+            content: `<:tick:1558554326887047228> Successfully purged **${purged}** closed ticket(s).`
         });
 
     }

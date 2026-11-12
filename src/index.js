@@ -20,7 +20,7 @@ loadCommands(client);
 loadEvents(client);
 
 client.once("clientReady", () => {
-    console.log(`✅ Logged in as ${client.user.tag}`);
+    console.log(`Logged in as ${client.user.tag}`);
 });
 
 client.login(process.env.DISCORD_TOKEN);

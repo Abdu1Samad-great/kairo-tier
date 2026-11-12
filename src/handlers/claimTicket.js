@@ -13,26 +13,6 @@ module.exports = async (interaction) => {
     if (!interaction.isButton()) return;
     if (interaction.customId !== "claim") return;
 
-    const { data: settings } = await supabase
-        .from("ticket_settings")
-        .select("staff_role")
-        .eq("guild_id", interaction.guild.id)
-        .single();
-
-    if (!settings?.staff_role) {
-        return interaction.reply({
-            content: "❌ No staff role configured.",
-            flags: MessageFlags.Ephemeral
-        });
-    }
-
-    if (!interaction.member.roles.cache.has(settings.staff_role)) {
-        return interaction.reply({
-            content: "❌ Only staff members can claim tickets.",
-            flags: MessageFlags.Ephemeral
-        });
-    }
-
     const { data: ticket } = await supabase
         .from("tickets")
         .select("*")
@@ -41,14 +21,14 @@ module.exports = async (interaction) => {
 
     if (!ticket) {
         return interaction.reply({
-            content: "❌ Ticket not found.",
+            content: "Ticket not found.",
             flags: MessageFlags.Ephemeral
         });
     }
 
     if (ticket.claimed_by) {
         return interaction.reply({
-            content: `❌ Already claimed by <@${ticket.claimed_by}>.`,
+            content: `Already claimed by <@${ticket.claimed_by}>.`,
             flags: MessageFlags.Ephemeral
         });
     }
@@ -63,9 +43,9 @@ module.exports = async (interaction) => {
     const embed = EmbedBuilder.from(interaction.message.embeds[0]);
 
     embed.setFields(
-        ...(embed.data.fields || []).filter(f => f.name !== "👮 Claimed By"),
+        ...(embed.data.fields || []).filter((field) => field.name !== "Claimed By"),
         {
-            name: "👮 Claimed By",
+            name: "Claimed By",
             value: `<@${interaction.user.id}>`,
             inline: false
         }

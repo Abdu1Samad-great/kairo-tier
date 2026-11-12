@@ -13,20 +13,18 @@ module.exports = async (interaction) => {
 
     if (!ticket) {
         return interaction.reply({
-            content: "❌ Ticket not found.",
+            content: "Ticket not found.",
             ephemeral: true
         });
     }
 
-    // Only the staff member who requested the close can cancel
     if (ticket.close_requested_by !== interaction.user.id) {
         return interaction.reply({
-            content: `❌ Only <@${ticket.close_requested_by}> can cancel this closure.`,
+            content: `Only <@${ticket.close_requested_by}> can cancel this closure.`,
             ephemeral: true
         });
     }
 
-    // Reset database
     await supabase
         .from("tickets")
         .update({
@@ -34,7 +32,6 @@ module.exports = async (interaction) => {
         })
         .eq("channel_id", interaction.channel.id);
 
-    // Delete the confirmation message
     await interaction.message.delete().catch(() => {});
 
 };

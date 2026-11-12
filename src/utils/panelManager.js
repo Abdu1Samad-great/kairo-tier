@@ -9,7 +9,6 @@ const supabase = require("../database/supabase");
 
 module.exports = async function updatePanel(guild) {
 
-    // Get Settings
     const { data: settings, error: settingsError } = await supabase
         .from("ticket_settings")
         .select("*")
@@ -21,7 +20,6 @@ module.exports = async function updatePanel(guild) {
         return;
     }
 
-    // Get Buttons
     const { data: buttons, error: buttonsError } = await supabase
         .from("ticket_buttons")
         .select("*")
@@ -33,7 +31,6 @@ module.exports = async function updatePanel(guild) {
         return;
     }
 
-    // Get Panel Channel
     const channel = guild.channels.cache.get(settings.panel_channel);
 
     if (!channel) {
@@ -41,13 +38,11 @@ module.exports = async function updatePanel(guild) {
         return;
     }
 
-    // Create Embed
     const embed = new EmbedBuilder()
         .setColor(settings.embed_color || "#e11d48")
         .setTitle(settings.header || "Support Center")
         .setDescription(settings.description || "Choose a category below.");
 
-    // Create Buttons
     const rows = [];
     let currentRow = new ActionRowBuilder();
     let count = 0;
@@ -98,7 +93,6 @@ module.exports = async function updatePanel(guild) {
 
     let message = null;
 
-    // Try editing existing panel
     try {
 
         if (settings.message_id) {
@@ -118,7 +112,6 @@ module.exports = async function updatePanel(guild) {
 
     }
 
-    // Create new panel if needed
     if (!message) {
 
         message = await channel.send({
@@ -135,6 +128,6 @@ module.exports = async function updatePanel(guild) {
 
     }
 
-    console.log(`✅ Panel Updated (${buttons.length} Buttons)`);
+    console.log(`<:tick:1558554326887047228> Panel Updated (${buttons.length} Buttons)`);
 
 };

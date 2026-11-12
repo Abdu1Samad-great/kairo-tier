@@ -7,17 +7,17 @@ const supabase = require("../../database/supabase");
 const updatePanel = require("../../utils/panelManager");
 
 module.exports = {
+    permission: "admin",
     data: new SlashCommandBuilder()
         .setName("editdescription")
-        .setDescription("Edit the ticket panel description.")
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+        .setDescription("Edit the ticket panel description."),
 
     async execute(interaction) {
 
         if (!interaction.deferred && !interaction.replied) {
             await interaction.reply({
                 content:
-                    "✏️ **Send the new panel description in this channel.**\n\nType `cancel` to cancel.\nYou have **60 seconds.**",
+                    "<:developer:1533542330257375452> **Send the new panel description in this channel.**\n\nType `cancel` to cancel.\nYou have **60 seconds.**",
                 ephemeral: true
             });
         }
@@ -36,7 +36,7 @@ module.exports = {
                 await message.delete().catch(() => {});
 
                 return interaction.followUp({
-                    content: "❌ Description edit cancelled.",
+                    content: "<:Cross:1558553359642918952> Description edit cancelled.",
                     ephemeral: true
                 });
             }
@@ -49,7 +49,7 @@ module.exports = {
 
             if (!settings) {
                 return interaction.followUp({
-                    content: "❌ Run /setupticket first.",
+                    content: "<:Cross:1558553359642918952> Run /setupticket first.",
                     ephemeral: true
                 });
             }
@@ -66,7 +66,7 @@ module.exports = {
             await message.delete().catch(() => {});
 
             return interaction.followUp({
-                content: "✅ Description updated successfully.",
+                content: "<:tick:1558554326887047228> Description updated successfully.",
                 ephemeral: true
             });
 
@@ -75,7 +75,7 @@ module.exports = {
         collector.on("end", async (collected) => {
             if (collected.size === 0) {
                 await interaction.followUp({
-                    content: "⏰ You didn't send a description in time.",
+                    content: "<:Poll:1552279014767591516> You didn't send a description in time.",
                     ephemeral: true
                 }).catch(() => {});
             }

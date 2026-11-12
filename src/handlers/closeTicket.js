@@ -14,7 +14,7 @@ module.exports = async (interaction) => {
     if (interaction.customId !== "close") return;
 
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-    
+
     const { data: ticket } = await supabase
         .from("tickets")
         .select("*")
@@ -23,24 +23,22 @@ module.exports = async (interaction) => {
 
     if (!ticket) {
         return interaction.editReply({
-            content: "❌ Ticket not found."
+            content: "Ticket not found."
         });
     }
 
-    // Only claimer can close
     if (
         ticket.claimed_by &&
         ticket.claimed_by !== interaction.user.id
     ) {
         return interaction.editReply({
-            content: `❌ Only <@${ticket.claimed_by}> can close this ticket.`
+            content: `Only <@${ticket.claimed_by}> can close this ticket.`
         });
     }
 
-    // Prevent multiple confirmations
     if (ticket.close_requested_by) {
         return interaction.editReply({
-            content: `❌ A close confirmation is already pending by <@${ticket.close_requested_by}>.`
+            content: `A close confirmation is already pending by <@${ticket.close_requested_by}>.`
         });
     }
 
@@ -53,16 +51,12 @@ module.exports = async (interaction) => {
 
     const embed = new EmbedBuilder()
         .setColor("#f59e0b")
-        .setTitle("⚠️ Confirm Ticket Closure")
+        .setTitle("Confirm Ticket Closure")
         .setDescription(
-`Requested By:
-<@${interaction.user.id}>
-
-Are you sure you want to close this ticket?`
+            `Requested By:\n<@${interaction.user.id}>\n\nAre you sure you want to close this ticket?`
         );
 
     const row = new ActionRowBuilder().addComponents(
-
         new ButtonBuilder()
             .setCustomId("confirm_close")
             .setLabel("Confirm")
@@ -72,7 +66,6 @@ Are you sure you want to close this ticket?`
             .setCustomId("cancel_close")
             .setLabel("Cancel")
             .setStyle(ButtonStyle.Secondary)
-
     );
 
     await interaction.channel.send({
@@ -81,7 +74,7 @@ Are you sure you want to close this ticket?`
     });
 
     return interaction.editReply({
-        content: "✅ Confirmation message sent."
+        content: "Confirmation message sent."
     });
 
 };

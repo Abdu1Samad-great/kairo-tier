@@ -13,7 +13,6 @@ const {
 
 const supabase = require("../database/supabase");
 
-// Prevent the same interaction from being processed twice
 const processingInteractions = new Set();
 
 module.exports = async (interaction) => {
@@ -21,17 +20,15 @@ module.exports = async (interaction) => {
     if (!interaction.isButton()) return;
     if (!interaction.customId.startsWith("ticket_")) return;
 
-    // Prevent duplicate handling of the same Discord interaction
     if (processingInteractions.has(interaction.id)) {
         console.log(
-            `⚠️ Duplicate ticket interaction ignored: ${interaction.id}`
+            `<:Poll:1552279014767591516> Duplicate ticket interaction ignored: ${interaction.id}`
         );
         return;
     }
 
     processingInteractions.add(interaction.id);
 
-    // Remove from memory after a short time
     setTimeout(() => {
         processingInteractions.delete(interaction.id);
     }, 15000);
@@ -43,9 +40,6 @@ module.exports = async (interaction) => {
             ""
         );
 
-        // =========================
-        // GET BUTTON
-        // =========================
 
         const { data: button, error } = await supabase
             .from("ticket_buttons")
@@ -58,7 +52,7 @@ module.exports = async (interaction) => {
             if (!interaction.replied && !interaction.deferred) {
 
                 return await interaction.reply({
-                    content: "❌ Invalid ticket button.",
+                    content: "<:Cross:1558553359642918952> Invalid ticket button.",
                     flags: MessageFlags.Ephemeral
                 });
 
@@ -67,9 +61,7 @@ module.exports = async (interaction) => {
             return;
         }
 
-        // =========================
         // DISABLED
-        // =========================
 
         if (button.disabled === true) {
 
@@ -77,7 +69,7 @@ module.exports = async (interaction) => {
 
                 return await interaction.reply({
                     content:
-                        "❌ This ticket category is currently closed.",
+                        "<:Cross:1558553359642918952> This ticket category is currently closed.",
                     flags: MessageFlags.Ephemeral
                 });
 
@@ -86,9 +78,6 @@ module.exports = async (interaction) => {
             return;
         }
 
-        // =========================
-        // QUESTIONS
-        // =========================
 
         const {
             data: questions,
@@ -106,9 +95,6 @@ module.exports = async (interaction) => {
             );
         }
 
-        // =========================
-        // SHOW MODAL
-        // =========================
 
         if (questions && questions.length > 0) {
 
@@ -164,17 +150,13 @@ module.exports = async (interaction) => {
             return await interaction.showModal(modal);
         }
 
-        // =========================
         // DEFER
-        // =========================
 
         await interaction.deferReply({
             flags: MessageFlags.Ephemeral
         });
 
-        // =========================
         // SETTINGS
-        // =========================
 
         const {
             data: settings,
@@ -195,9 +177,6 @@ module.exports = async (interaction) => {
             );
         }
 
-        // =========================
-        // BLACKLIST
-        // =========================
 
         if (
             settings?.blacklist_role &&
@@ -211,13 +190,11 @@ module.exports = async (interaction) => {
 
             return await interaction.editReply({
                 content:
-                    "❌ You are blacklisted from creating tickets."
+                    "<:Cross:1558553359642918952> You are blacklisted from creating tickets."
             });
         }
 
-        // =========================
         // COUNTER
-        // =========================
 
         const {
             data: counter,
@@ -281,9 +258,6 @@ module.exports = async (interaction) => {
             }
         }
 
-        // =========================
-        // CHANNEL NAME
-        // =========================
 
         let cleanName = String(button.label || "ticket")
             .toLowerCase()
@@ -300,9 +274,6 @@ module.exports = async (interaction) => {
         const ticketName =
             `${cleanName}-${String(number).padStart(4, "0")}`;
 
-        // =========================
-        // PERMISSIONS
-        // =========================
 
         const overwrites = [
 
@@ -326,9 +297,6 @@ module.exports = async (interaction) => {
 
         ];
 
-        // =========================
-        // STAFF ROLES
-        // =========================
 
         if (Array.isArray(settings?.staff_roles)) {
 
@@ -338,7 +306,7 @@ module.exports = async (interaction) => {
 
                 if (!/^\d+$/.test(id)) {
                     console.log(
-                        `⚠️ Invalid staff role ID: ${id}`
+                        `<:Poll:1552279014767591516> Invalid staff role ID: ${id}`
                     );
                     continue;
                 }
@@ -349,7 +317,7 @@ module.exports = async (interaction) => {
                 if (!role) {
 
                     console.log(
-                        `⚠️ Skipping missing staff role: ${id}`
+                        `<:Poll:1552279014767591516> Skipping missing staff role: ${id}`
                     );
 
                     continue;
@@ -369,9 +337,6 @@ module.exports = async (interaction) => {
             }
         }
 
-        // =========================
-        // CREATE CHANNEL
-        // =========================
 
         const channel =
             await interaction.guild.channels.create({
@@ -388,9 +353,7 @@ module.exports = async (interaction) => {
 
             });
 
-        // =========================
         // EMBED
-        // =========================
 
         const embed = new EmbedBuilder()
 
@@ -410,7 +373,7 @@ module.exports = async (interaction) => {
 
             })
 
-            .setTitle("🎫 Support Ticket")
+            .setTitle("<:forensic:1563646085971583006> Support Ticket")
 
             .setDescription(
 `Hey ${interaction.user}, thanks for opening a ticket. A staff member will be with you shortly.
@@ -426,9 +389,7 @@ module.exports = async (interaction) => {
 
             .setTimestamp();
 
-        // =========================
         // BUTTONS
-        // =========================
 
         const row =
             new ActionRowBuilder()
@@ -450,9 +411,6 @@ module.exports = async (interaction) => {
 
                 );
 
-        // =========================
-        // SEND MESSAGE
-        // =========================
 
         await channel.send({
 
@@ -469,9 +427,6 @@ module.exports = async (interaction) => {
 
         });
 
-        // =========================
-        // SAVE TICKET
-        // =========================
 
         const {
             error: ticketError
@@ -508,14 +463,12 @@ module.exports = async (interaction) => {
 
         }
 
-        // =========================
         // SUCCESS
-        // =========================
 
         return await interaction.editReply({
 
             content:
-                `✅ Ticket Created: ${channel}`
+                `<:tick:1558554326887047228> Ticket Created: ${channel}`
 
         });
 
@@ -534,7 +487,7 @@ module.exports = async (interaction) => {
             return await interaction.editReply({
 
                 content:
-                    `❌ Something went wrong while creating the ticket.\n\`${error.message}\``
+                    `<:Cross:1558553359642918952> Something went wrong while creating the ticket.\n\`${error.message}\``
 
             }).catch(() => {});
 
@@ -543,7 +496,7 @@ module.exports = async (interaction) => {
         return await interaction.reply({
 
             content:
-                `❌ Something went wrong while creating the ticket.\n\`${error.message}\``,
+                `<:Cross:1558553359642918952> Something went wrong while creating the ticket.\n\`${error.message}\``,
 
             flags:
                 MessageFlags.Ephemeral

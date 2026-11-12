@@ -21,14 +21,14 @@ module.exports = async (interaction) => {
 
     if (!ticket) {
         return interaction.reply({
-            content: "❌ Ticket not found.",
+            content: "Ticket not found.",
             flags: MessageFlags.Ephemeral
         });
     }
 
     if (ticket.claimed_by !== interaction.user.id) {
         return interaction.reply({
-            content: `❌ Only <@${ticket.claimed_by}> can unclaim this ticket.`,
+            content: `Only <@${ticket.claimed_by}> can unclaim this ticket.`,
             flags: MessageFlags.Ephemeral
         });
     }
@@ -44,12 +44,11 @@ module.exports = async (interaction) => {
 
     embed.setFields(
         ...(embed.data.fields || []).filter(
-            field => field.name !== "👮 Claimed By"
+            (field) => field.name !== "Claimed By"
         )
     );
 
     const row = new ActionRowBuilder().addComponents(
-
         new ButtonBuilder()
             .setCustomId("claim")
             .setLabel("Claim")
@@ -59,7 +58,6 @@ module.exports = async (interaction) => {
             .setCustomId("close")
             .setLabel("Close")
             .setStyle(ButtonStyle.Danger)
-
     );
 
     return interaction.update({

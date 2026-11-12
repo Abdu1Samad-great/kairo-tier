@@ -12,10 +12,10 @@ const {
 const supabase = require("../../database/supabase");
 
 module.exports = {
+    permission: "admin",
     data: new SlashCommandBuilder()
         .setName("setupticket")
         .setDescription("Setup the ticket panel.")
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
         .addChannelOption(option =>
             option
                 .setName("channel")
@@ -46,13 +46,12 @@ module.exports = {
                 console.log(error);
 
                 return interaction.editReply({
-                    content: "❌ Database error."
+                    content: "<:Cross:1558553359642918952> Database error."
                 });
 
             }
 
 
-            // Check if old panel exists
             if (existing?.message_id) {
 
                 const oldChannel = interaction.guild.channels.cache.get(
@@ -68,7 +67,7 @@ module.exports = {
 
 
                         return interaction.editReply({
-                            content: "❌ A ticket panel already exists in this server."
+                            content: "<:Cross:1558553359642918952> A ticket panel already exists in this server."
                         });
 
 
@@ -88,7 +87,7 @@ module.exports = {
 
             const embed = new EmbedBuilder()
                 .setColor(existing?.embed_color || "#e11d48")
-                .setTitle("🎫 Support Center")
+                .setTitle("<:forensic:1563646085971583006> Support Center")
                 .setDescription(
                     "Need help?\n\nChoose a category below."
                 );
@@ -167,7 +166,7 @@ module.exports = {
 
             return interaction.editReply({
 
-                content: `✅ Ticket panel created successfully in ${channel}`
+                content: `<:tick:1558554326887047228> Ticket panel created successfully in ${channel}`
 
             });
 
@@ -182,7 +181,7 @@ module.exports = {
 
             return interaction.editReply({
 
-                content: "❌ Something went wrong while creating the ticket panel."
+                content: "<:Cross:1558553359642918952> Something went wrong while creating the ticket panel."
 
             });
 

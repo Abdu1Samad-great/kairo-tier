@@ -9,12 +9,11 @@ const supabase = require("../../database/supabase");
 const updatePanel = require("../../utils/panelManager");
 
 module.exports = {
+    permission: "admin",
     data: new SlashCommandBuilder()
         .setName("addbutton")
         .setDescription("Add a ticket button.")
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
 
-        // REQUIRED OPTIONS FIRST
         .addStringOption(option =>
             option
                 .setName("label")
@@ -43,7 +42,6 @@ module.exports = {
                 .setRequired(true)
         )
 
-        // OPTIONAL OPTIONS AFTER REQUIRED
         .addStringOption(option =>
             option
                 .setName("question1")
@@ -161,14 +159,14 @@ module.exports = {
         if (error) {
             console.log(error);
             return interaction.editReply({
-                content: "❌ Database Error."
+                content: "<:Cross:1558553359642918952> Database Error."
             });
         }
 
 
         if (buttons.length >= 6) {
             return interaction.editReply({
-                content: "❌ Maximum 6 buttons are allowed."
+                content: "<:Cross:1558553359642918952> Maximum 6 buttons are allowed."
             });
         }
 
@@ -191,7 +189,7 @@ module.exports = {
         if (insertError) {
             console.log(insertError);
             return interaction.editReply({
-                content: "❌ Failed to create button."
+                content: "<:Cross:1558553359642918952> Failed to create button."
             });
         }
 
@@ -216,7 +214,7 @@ module.exports = {
                 console.log(questionError);
 
                 return interaction.editReply({
-                    content: "❌ Failed to save ticket questions."
+                    content: "<:Cross:1558553359642918952> Failed to save ticket questions."
                 });
             }
         }
@@ -226,12 +224,12 @@ module.exports = {
 
 
         let message =
-            `✅ Button **${label}** has been created successfully.`;
+            `<:tick:1558554326887047228> Button **${label}** has been created successfully.`;
 
 
         if (questions.length > 0) {
 
-            message += `\n\n📝 Questions Added: **${questions.length}**\n`;
+            message += `\n\n<:Updates:1552280778916761671> Questions Added: **${questions.length}**\n`;
 
             questions.forEach((q, i) => {
                 message += `**${i + 1}.** ${q.question} (${q.type})\n`;

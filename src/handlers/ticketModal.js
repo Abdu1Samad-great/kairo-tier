@@ -16,7 +16,6 @@ module.exports = async (interaction) => {
 
     try {
 
-        // Acknowledge the modal submission
         await interaction.deferReply({
             flags: 64
         });
@@ -26,7 +25,6 @@ module.exports = async (interaction) => {
             ""
         );
 
-        // Get ticket button
         const { data: button, error: buttonError } = await supabase
             .from("ticket_buttons")
             .select("*")
@@ -37,17 +35,16 @@ module.exports = async (interaction) => {
             console.error("BUTTON DATABASE ERROR:", buttonError);
 
             return interaction.editReply({
-                content: "❌ Failed to load ticket button."
+                content: "<:Cross:1558553359642918952> Failed to load ticket button."
             });
         }
 
         if (!button) {
             return interaction.editReply({
-                content: "❌ Invalid ticket button."
+                content: "<:Cross:1558553359642918952> Invalid ticket button."
             });
         }
 
-        // Get guild settings
         const { data: settings, error: settingsError } = await supabase
             .from("ticket_settings")
             .select("*")
@@ -58,7 +55,6 @@ module.exports = async (interaction) => {
             console.error("SETTINGS DATABASE ERROR:", settingsError);
         }
 
-        // Get ticket counter
         const { data: counter, error: counterError } = await supabase
             .from("ticket_counter")
             .select("*")
@@ -100,7 +96,6 @@ module.exports = async (interaction) => {
             }
         }
 
-        // Create ticket name
         const ticketName =
             `${button.label
                 .toLowerCase()
@@ -110,7 +105,6 @@ module.exports = async (interaction) => {
                 .replace(/^-|-$/g, "")
             }-${String(number).padStart(4, "0")}`;
 
-        // Permission overwrites
         const overwrites = [
 
             {
@@ -133,7 +127,6 @@ module.exports = async (interaction) => {
 
         ];
 
-        // Add staff roles
         if (Array.isArray(settings?.staff_roles)) {
 
             for (const roleId of settings.staff_roles) {
@@ -175,7 +168,6 @@ module.exports = async (interaction) => {
             }
         }
 
-        // Create channel
         const channel = await interaction.guild.channels.create({
 
             name: ticketName,
@@ -190,7 +182,6 @@ module.exports = async (interaction) => {
 
         });
 
-        // Get ticket questions
         const { data: questions, error: questionsError } =
             await supabase
                 .from("ticket_questions")
@@ -205,7 +196,6 @@ module.exports = async (interaction) => {
             );
         }
 
-        // Build answers
         let answers = "";
 
         if (questions && questions.length > 0) {
@@ -231,7 +221,6 @@ module.exports = async (interaction) => {
             }
         }
 
-        // Create embed
         const embed = new EmbedBuilder()
 
             .setColor(
@@ -245,7 +234,7 @@ module.exports = async (interaction) => {
                 }) || undefined
             })
 
-            .setTitle("🎫 Support Ticket")
+            .setTitle("<:forensic:1563646085971583006> Support Ticket")
 
             .setDescription(
                 `Hey ${interaction.user}, thanks for opening a ticket. A staff member will be with you shortly.
@@ -264,7 +253,6 @@ ${answers || "No information provided."}`
 
             .setTimestamp();
 
-        // Ticket buttons
         const row = new ActionRowBuilder()
 
             .addComponents(
@@ -281,7 +269,6 @@ ${answers || "No information provided."}`
 
             );
 
-        // Send ticket message
         await channel.send({
 
             content: `<@${interaction.user.id}>`,
@@ -296,7 +283,6 @@ ${answers || "No information provided."}`
 
         });
 
-        // Save ticket to database
         const { error: ticketError } = await supabase
             .from("tickets")
             .insert({
@@ -322,11 +308,10 @@ ${answers || "No information provided."}`
                 ticketError
             );
 
-            // Ticket was created but DB failed
             return interaction.editReply({
 
                 content:
-                    `⚠️ Ticket created: ${channel}\n` +
+                    `<:Poll:1552279014767591516> Ticket created: ${channel}\n` +
                     `However, there was an error saving it to the database.`
 
             });
@@ -336,7 +321,7 @@ ${answers || "No information provided."}`
         return interaction.editReply({
 
             content:
-                `✅ Ticket Created: ${channel}`
+                `<:tick:1558554326887047228> Ticket Created: ${channel}`
 
         });
 
@@ -355,7 +340,7 @@ ${answers || "No information provided."}`
 
                 await interaction.editReply({
                     content:
-                        "❌ An error occurred while creating the ticket."
+                        "<:Cross:1558553359642918952> An error occurred while creating the ticket."
                 });
 
             } catch (editError) {
@@ -374,7 +359,7 @@ ${answers || "No information provided."}`
                 await interaction.reply({
 
                     content:
-                        "❌ An error occurred while creating the ticket.",
+                        "<:Cross:1558553359642918952> An error occurred while creating the ticket.",
 
                     flags: 64
 

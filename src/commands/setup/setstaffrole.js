@@ -6,10 +6,10 @@
     const supabase = require("../../database/supabase");
 
     module.exports = {
+    permission: "admin",
         data: new SlashCommandBuilder()
             .setName("setstaffrole")
             .setDescription("Set the staff role for tickets.")
-            .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
 
             .addStringOption(option =>
         option
@@ -46,7 +46,7 @@
             if (!settings) {
 
                 return interaction.editReply({
-                    content: "❌ Run /setupticket first."
+                    content: "<:Cross:1558553359642918952> Run /setupticket first."
                 });
 
             }
@@ -69,7 +69,7 @@ if (!roles) {
 
         if (roles.length === 0) {
             return interaction.editReply({
-                content: "❌ No staff roles have been added."
+                content: "<:Cross:1558553359642918952> No staff roles have been added."
             });
         }
 
@@ -81,7 +81,7 @@ if (!roles) {
 
     if (!role) {
         return interaction.editReply({
-            content: "❌ Please select a role."
+            content: "<:Cross:1558553359642918952> Please select a role."
         });
     }
 
@@ -89,7 +89,7 @@ if (!roles) {
 
         if (roles.includes(role.id)) {
             return interaction.editReply({
-                content: "❌ This role is already a staff role."
+                content: "<:Cross:1558553359642918952> This role is already a staff role."
             });
         }
 
@@ -112,12 +112,12 @@ if (!roles) {
         console.log(error);
 
         return interaction.editReply({
-            content: "❌ Failed to update staff roles."
+            content: "<:Cross:1558553359642918952> Failed to update staff roles."
         });
     }
 
     return interaction.editReply({
-        content: "✅ Staff roles updated successfully."
+        content: "<:tick:1558554326887047228> Staff roles updated successfully."
     });
 
         }

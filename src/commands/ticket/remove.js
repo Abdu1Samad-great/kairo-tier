@@ -6,6 +6,7 @@ const {
 const supabase = require("../../database/supabase");
 
 module.exports = {
+    permission: "staff",
     data: new SlashCommandBuilder()
         .setName("remove")
         .setDescription("Remove a user from the current ticket.")
@@ -20,7 +21,6 @@ module.exports = {
 
         await interaction.deferReply({ ephemeral: true });
 
-        // Check ticket
         const { data: ticket } = await supabase
             .from("tickets")
             .select("*")
@@ -29,11 +29,10 @@ module.exports = {
 
         if (!ticket) {
             return interaction.editReply({
-                content: "❌ This command can only be used inside a ticket."
+                content: "<:Cross:1558553359642918952> This command can only be used inside a ticket."
             });
         }
 
-        // Get settings
         const { data: settings } = await supabase
             .from("ticket_settings")
             .select("*")
@@ -42,30 +41,22 @@ module.exports = {
 
         if (!settings) {
             return interaction.editReply({
-                content: "❌ Ticket system is not configured."
+                content: "<:Cross:1558553359642918952> Ticket system is not configured."
             });
         }
 
-        // Staff Check
-        if (!interaction.member.roles.cache.has(settings.staff_role)) {
-            return interaction.editReply({
-                content: "❌ You don't have permission to use this command."
-            });
-        }
 
         const user = interaction.options.getUser("user");
 
         // Don't remove ticket owner
         if (user.id === ticket.owner_id) {
             return interaction.editReply({
-                content: "❌ You cannot remove the ticket owner."
+                content: "<:Cross:1558553359642918952> You cannot remove the ticket owner."
             });
         }
 
-        // Remove from text channel
         await interaction.channel.permissionOverwrites.delete(user.id).catch(() => {});
 
-        // Remove from VC if exists
         const vc = interaction.guild.channels.cache.find(
             c =>
                 c.parentId === interaction.channel.parentId &&
@@ -78,7 +69,7 @@ module.exports = {
         }
 
         return interaction.editReply({
-            content: `✅ ${user} has been removed from this ticket.`
+            content: `<:tick:1558554326887047228> ${user} has been removed from this ticket.`
         });
 
     }

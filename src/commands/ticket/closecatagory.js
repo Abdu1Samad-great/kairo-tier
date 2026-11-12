@@ -7,10 +7,10 @@ const {
 const supabase = require("../../database/supabase");
 
 module.exports = {
+    permission: "admin",
     data: new SlashCommandBuilder()
         .setName("closecategory")
         .setDescription("Close a ticket category.")
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
 
         .addStringOption(option =>
             option
@@ -61,13 +61,13 @@ module.exports = {
             console.log(error);
 
             return interaction.editReply({
-                content: "❌ Failed to close category."
+                content: "<:Cross:1558553359642918952> Failed to close category."
             });
 
         }
 
         return interaction.editReply({
-            content: `✅ **${category}** has been closed.`
+            content: `<:tick:1558554326887047228> **${category}** has been closed.`
         });
 
     }

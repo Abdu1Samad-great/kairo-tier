@@ -7,10 +7,10 @@ const {
 const supabase = require("../../database/supabase");
 
 module.exports = {
+    permission: "admin",
     data: new SlashCommandBuilder()
         .setName("opencategory")
         .setDescription("Open a ticket category.")
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
 
         .addStringOption(option =>
             option
@@ -61,13 +61,13 @@ module.exports = {
             console.log(error);
 
             return interaction.editReply({
-                content: "❌ Failed to open category."
+                content: "<:Cross:1558553359642918952> Failed to open category."
             });
 
         }
 
         return interaction.editReply({
-            content: `✅ **${category}** has been opened.`
+            content: `<:tick:1558554326887047228> **${category}** has been opened.`
         });
 
     }

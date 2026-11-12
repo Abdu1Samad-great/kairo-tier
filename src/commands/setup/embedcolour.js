@@ -9,10 +9,10 @@ const {
 const supabase = require("../../database/supabase");
 
 module.exports = {
+    permission: "admin",
     data: new SlashCommandBuilder()
         .setName("embedcolor")
         .setDescription("Change the ticket embed color.")
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
 
         .addStringOption(option =>
             option
@@ -54,14 +54,14 @@ module.exports = {
             console.log(error);
 
             return interaction.editReply({
-                content: "❌ Failed to update the embed color."
+                content: "<:Cross:1558553359642918952> Failed to update the embed color."
             });
 
         }
 
         const preview = new EmbedBuilder()
             .setColor(color === "Random" ? Colors.Random : Colors[color])
-            .setTitle("✅ Embed Color Updated")
+            .setTitle("<:tick:1558554326887047228> Embed Color Updated")
             .setDescription(`The default embed color has been changed to **${color}**.`);
 
         return interaction.editReply({

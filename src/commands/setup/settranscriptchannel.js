@@ -8,10 +8,10 @@ const {
 const supabase = require("../../database/supabase");
 
 module.exports = {
+    permission: "admin",
     data: new SlashCommandBuilder()
         .setName("settranscriptchannel")
         .setDescription("Set the transcript channel.")
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
 
         .addChannelOption(option =>
             option
@@ -40,12 +40,12 @@ module.exports = {
             console.log(error);
 
             return interaction.editReply({
-                content: "❌ Failed to save transcript channel."
+                content: "<:Cross:1558553359642918952> Failed to save transcript channel."
             });
         }
 
         return interaction.editReply({
-            content: `✅ Transcript channel set to ${channel}.`
+            content: `<:tick:1558554326887047228> Transcript channel set to ${channel}.`
         });
 
     }

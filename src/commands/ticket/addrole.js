@@ -8,6 +8,7 @@ const {
 const supabase = require("../../database/supabase");
 
 module.exports = {
+    permission: "staff",
     data: new SlashCommandBuilder()
         .setName("addrole")
         .setDescription("Add a role to the current ticket.")
@@ -30,7 +31,7 @@ module.exports = {
 
         if (!ticket) {
             return interaction.editReply({
-                content: "❌ This command can only be used inside a ticket."
+                content: "<:Cross:1558553359642918952> This command can only be used inside a ticket."
             });
         }
 
@@ -42,7 +43,6 @@ module.exports = {
             ReadMessageHistory: true
         });
 
-        // Give VC access if ticket VC exists
         const vc = interaction.guild.channels.cache.find(c =>
             c.parentId === interaction.channel.parentId &&
             c.name === interaction.channel.name &&
@@ -58,7 +58,7 @@ module.exports = {
         }
 
         return interaction.editReply({
-            content: `✅ ${role} has been added to this ticket.`
+            content: `<:tick:1558554326887047228> ${role} has been added to this ticket.`
         });
 
     }

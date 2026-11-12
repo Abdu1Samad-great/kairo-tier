@@ -7,10 +7,10 @@ const {
 const supabase = require("../../database/supabase");
 
 module.exports = {
+    permission: "admin",
     data: new SlashCommandBuilder()
         .setName("setblacklistrole")
         .setDescription("Set the role that cannot create tickets.")
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
 
         .addRoleOption(option =>
             option
@@ -38,12 +38,12 @@ module.exports = {
             console.log(error);
 
             return interaction.editReply({
-                content: "❌ Failed to save blacklist role."
+                content: "<:Cross:1558553359642918952> Failed to save blacklist role."
             });
         }
 
         return interaction.editReply({
-            content: `✅ Blacklist role set to ${role}.`
+            content: `<:tick:1558554326887047228> Blacklist role set to ${role}.`
         });
 
     }

@@ -18,12 +18,12 @@ for (const folder of folders) {
         const command = require(path.join(folderPath, file));
 
         if (!command.data || !command.execute) {
-            console.log(`❌ Invalid command file: ${folder}/${file}`);
+            console.log(`<:Cross:1558553359642918952> Invalid command file: ${folder}/${file}`);
             continue;
         }
 
         commands.push(command.data.toJSON());
-        console.log(`✅ Loaded: ${command.data.name}`);
+        console.log(`<:tick:1558554326887047228> Loaded: ${command.data.name}`);
     }
 }
 
@@ -41,7 +41,7 @@ const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
             { body: commands }
         );
 
-        console.log("✅ Commands deployed!");
+        console.log("<:tick:1558554326887047228> Commands deployed!");
     } catch (err) {
         console.error(err);
     }

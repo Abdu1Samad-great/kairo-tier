@@ -7,10 +7,10 @@
 const supabase = require("../../database/supabase");
 
 module.exports = {
+    permission: "admin",
     data: new SlashCommandBuilder()
         .setName("editheader")
         .setDescription("Edit the ticket panel header.")
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
         .addStringOption(option =>
             option
                 .setName("text")
@@ -32,14 +32,14 @@ module.exports = {
 
 if (!settings) {
     return interaction.editReply({
-        content: "❌ Please run `/setupticket` first."
+        content: "<:Cross:1558553359642918952> Please run `/setupticket` first."
     });
 }
 
         const channel = interaction.guild.channels.cache.get(settings.panel_channel);
 if (!channel) {
     return interaction.editReply({
-        content: "❌ Ticket panel channel not found."
+        content: "<:Cross:1558553359642918952> Ticket panel channel not found."
     });
 }
 
@@ -61,7 +61,7 @@ if (!channel) {
             .eq("guild_id", interaction.guild.id);
 
   return interaction.editReply({
-    content:"✅ Header updated."
+    content:"<:tick:1558554326887047228> Header updated."
 });
 
     }

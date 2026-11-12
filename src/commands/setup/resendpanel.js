@@ -8,10 +8,10 @@ const supabase = require("../../database/supabase");
 const updatePanel = require("../../utils/panelManager");
 
 module.exports = {
+    permission: "admin",
     data: new SlashCommandBuilder()
         .setName("resendpanel")
-        .setDescription("Resend the ticket panel.")
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+        .setDescription("Resend the ticket panel."),
 
     async execute(interaction) {
 
@@ -27,7 +27,7 @@ module.exports = {
 
         if (!settings) {
             return interaction.editReply({
-                content: "❌ Ticket panel has not been setup."
+                content: "<:Cross:1558553359642918952> Ticket panel has not been setup."
             });
         }
 
@@ -35,11 +35,10 @@ module.exports = {
 
         if (!channel) {
             return interaction.editReply({
-                content: "❌ Panel channel not found."
+                content: "<:Cross:1558553359642918952> Panel channel not found."
             });
         }
 
-        // Delete old panel
         try {
 
             const oldMessage = await channel.messages.fetch(settings.message_id);
@@ -48,11 +47,10 @@ module.exports = {
 
         } catch {}
 
-        // Create new panel
         await updatePanel(interaction.guild);
 
         return interaction.editReply({
-            content: "✅ Ticket panel has been resent successfully."
+            content: "<:tick:1558554326887047228> Ticket panel has been resent successfully."
         });
 
     }

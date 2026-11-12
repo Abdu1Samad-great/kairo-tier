@@ -8,6 +8,7 @@ const discordTranscripts = require("discord-html-transcripts");
 const supabase = require("../../database/supabase");
 
 module.exports = {
+    permission: "owner",
     data: new SlashCommandBuilder()
         .setName("purge")
         .setDescription("Generate transcript and permanently delete this ticket."),
@@ -18,7 +19,6 @@ module.exports = {
             flags: MessageFlags.Ephemeral
         });
 
-        // Get ticket
         const { data: ticket } = await supabase
             .from("tickets")
             .select("*")
@@ -27,28 +27,17 @@ module.exports = {
 
         if (!ticket) {
             return interaction.editReply({
-                content: "❌ This is not a ticket."
+                content: "<:Cross:1558553359642918952> This is not a ticket."
             });
         }
 
-        // Get settings
         const { data: settings } = await supabase
             .from("ticket_settings")
             .select("owner_role, transcript_channel")
             .eq("guild_id", interaction.guild.id)
             .single();
 
-        // Owner role check
-        if (
-            !settings?.owner_role ||
-            !interaction.member.roles.cache.has(settings.owner_role)
-        ) {
-            return interaction.editReply({
-                content: "❌ Only the configured Owner Role can use this command."
-            });
-        }
 
-        // Generate transcript
         const transcript = await discordTranscripts.createTranscript(
             interaction.channel,
             {
@@ -58,7 +47,6 @@ module.exports = {
             }
         );
 
-        // Send transcript
         if (settings.transcript_channel) {
 
             const logChannel = interaction.guild.channels.cache.get(settings.transcript_channel);
@@ -74,7 +62,6 @@ module.exports = {
 
         }
 
-        // Delete linked VC
         const vc = interaction.guild.channels.cache.find(c =>
             c.parentId === interaction.channel.parentId &&
             c.name === interaction.channel.name &&
@@ -85,17 +72,15 @@ module.exports = {
             await vc.delete().catch(() => {});
         }
 
-        // Remove from database
         await supabase
             .from("tickets")
             .delete()
             .eq("channel_id", interaction.channel.id);
 
         await interaction.editReply({
-            content: "🗑️ Ticket purged. Transcript has been saved."
+            content: "<:triall_staff:1533541983409274911> Ticket purged. Transcript has been saved."
         });
 
-        // Delete channel
         setTimeout(async () => {
             await interaction.channel.delete().catch(() => {});
         }, 2000);

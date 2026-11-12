@@ -6,12 +6,10 @@ const {
 const supabase = require("../../database/supabase");
 
 module.exports = {
+    permission: "admin",
     data: new SlashCommandBuilder()
         .setName("resetpanel")
-        .setDescription("Delete the current ticket panel and reset the setup.")
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
-
-        
+        .setDescription("Delete the current ticket panel and reset the setup."),
 
     async execute(interaction) {
 
@@ -25,11 +23,10 @@ module.exports = {
 
         if (error || !settings) {
             return interaction.editReply({
-                content: "❌ No ticket setup found."
+                content: "<:Cross:1558553359642918952> No ticket setup found."
             });
         }
 
-        // Delete old panel if it still exists
         if (settings.panel_channel && settings.message_id) {
 
             try {
@@ -57,7 +54,7 @@ module.exports = {
             .update({
                 panel_channel: null,
                 message_id: null,
-                header: "🎫 Support Center",
+                header: "<:forensic:1563646085971583006> Support Center",
                 description: "Need help?\n\nChoose a category below."
             })
             .eq("guild_id", interaction.guild.id);
@@ -66,11 +63,10 @@ module.exports = {
     console.log(updateError);
 
     return interaction.editReply({
-        content: "❌ Failed to reset the ticket panel."
+        content: "<:Cross:1558553359642918952> Failed to reset the ticket panel."
     });
 }
 
-// Delete all buttons
 const { error: buttonError } = await supabase
     .from("ticket_buttons")
     .delete()
@@ -81,7 +77,7 @@ if (buttonError) {
 }
 
 return interaction.editReply({
-    content: "✅ Ticket panel has been reset successfully.\nRun `/setupticket` to create a new panel."
+    content: "<:tick:1558554326887047228> Ticket panel has been reset successfully.\nRun `/setupticket` to create a new panel."
 });
         
 
